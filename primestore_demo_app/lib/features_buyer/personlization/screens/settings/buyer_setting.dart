@@ -27,7 +27,7 @@ class BuyerSettingsScreen extends StatelessWidget {
               /// -- Account Settings Section
               TSectionHeading(
                 fontsize: 14,
-                title: "Account",
+                title: "Accounts",
                 showActionButton: false,
               ),
               
