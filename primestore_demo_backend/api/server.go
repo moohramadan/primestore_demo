@@ -3,27 +3,33 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	db "primestore_demo_backend/db/sqlc"
+	"primestore_demo_backend/util"
 )
 
-// Server serves HTTP requests for our banking service.
 type Server struct {
-	store  db.Queries
-	router *gin.Engine
+	store      db.Queries
+	tokenMaker *util.TokenMaker
+	mailer     *util.Mailer
+	router     *gin.Engine
 }
 
-// NewServer creates a new HTTP server and sets up routing.
-func NewServer(store db.Queries) *Server {
-	server := &Server{store: store}
+func NewServer(store db.Queries, tokenMaker *util.TokenMaker, mailer *util.Mailer) *Server {
+	server := &Server{
+		store:      store,
+		tokenMaker: tokenMaker,
+		mailer:     mailer,
+	}
 	router := gin.Default()
 
 	router.POST("/users", server.createUser)
-	router.POST("/login", server.login)
+	router.POST("/users/login", server.login)
+	router.POST("/users/verify-email/send", server.sendOtp)
+	router.POST("/users/verify-email/confirm", server.confirmOtp)
 
 	server.router = router
 	return server
 }
 
-// Start runs the HTTP server on the given address
 func (server *Server) Start(address string) error {
 	return server.router.Run(address)
 }

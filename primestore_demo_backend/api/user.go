@@ -5,7 +5,9 @@ import (
     "database/sql"
 	"github.com/gin-gonic/gin"
 	db "primestore_demo_backend/db/sqlc"
+	"log"
 	"primestore_demo_backend/util"
+	"time"
 )
 
 type createUserRequest struct {
@@ -22,6 +24,18 @@ type userResponse struct {
 	Email string `json:"email"`
 	Phone string `json:"phone"`
 }
+type loginResponse struct {
+	AccessToken string       `json:"access_token"`
+	User        userResponse `json:"user"`
+}
+type sendOtpRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+type sendOtpResponse struct {
+	OtpToken string `json:"otp_token"`
+}
+
 
 func (server *Server) createUser(ctx *gin.Context) {
 	var req createUserRequest
@@ -107,11 +121,95 @@ func (server *Server) login(ctx *gin.Context) {
 		return
 	}
 
-	rsp := userResponse{
-		ID:    int64(user.ID),
-		Name:  user.Name,
-		Email: user.Email,
-		Phone: user.Phone.String,
+		if err := util.CheckPassword(req.Password, user.PasswordHash); err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+		return
+	}
+	if !user.IsVerified {
+	ctx.JSON(http.StatusForbidden, gin.H{"error": "email not verified"})
+	return
+}
+
+	accessToken, err := server.tokenMaker.CreateToken(int64(user.ID), 24*time.Hour)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	rsp := loginResponse{
+		AccessToken: accessToken,
+		User: userResponse{
+			ID:    int64(user.ID),
+			Name:  user.Name,
+			Email: user.Email,
+			Phone: user.Phone.String,
+		},
 	}
 	ctx.JSON(http.StatusOK, rsp)
+
+}
+func (server *Server) sendOtp(ctx *gin.Context) {
+	var req sendOtpRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := server.store.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	otp, err := util.GenerateOTP()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	otpToken, err := server.tokenMaker.CreateOTPToken(int64(user.ID), otp, 10*time.Minute)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := server.mailer.SendOTP(user.Email, otp); err != nil {
+	log.Println("mailer error:", err) // temporary debug line
+	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send email"})
+	return
+}
+	
+
+
+	ctx.JSON(http.StatusOK, sendOtpResponse{OtpToken: otpToken})
+}
+type confirmOtpRequest struct {
+	OtpToken string `json:"otp_token" binding:"required"`
+	Otp      string `json:"otp" binding:"required"`
+}
+
+func (server *Server) confirmOtp(ctx *gin.Context) {
+	var req confirmOtpRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	claims, err := server.tokenMaker.VerifyOTPToken(req.OtpToken)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired code"})
+		return
+	}
+
+	if claims.OTP != req.Otp {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired code"})
+		return
+	}
+
+	if err := server.store.VerifyUserEmail(ctx, int32(claims.UserID)); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "email verified"})
 }

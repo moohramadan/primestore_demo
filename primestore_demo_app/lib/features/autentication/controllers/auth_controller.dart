@@ -2,10 +2,18 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../utils/constants/api_constants.dart';
 import '../models/user_model.dart';
+class LoginResult {
+  final String accessToken;
+  final UserModel user;
+
+  LoginResult({required this.accessToken, required this.user});
+}
+class UnverifiedEmailException implements Exception {
+  final String email;
+  UnverifiedEmailException(this.email);
+}
 
 class AuthController {
-  
-
   Future<UserModel> signUp({
     required String name,
     required String email,
@@ -34,13 +42,14 @@ class AuthController {
       final error = jsonDecode(response.body);
       throw Exception(error['error'] ?? 'Sign up failed');
     }
-  }
-  Future<UserModel> login({
+  } // keep as-is
+
+  Future<LoginResult> login({
   String? email,
   String? phone,
   required String password,
 }) async {
-  final url = Uri.parse('${ApiConstants.baseUrl}/login');
+  final url = Uri.parse('${ApiConstants.baseUrl}/users/login');
 
   final body = <String, dynamic>{'password': password};
   if (email != null) body['email'] = email;
@@ -53,10 +62,49 @@ class AuthController {
   );
 
   if (response.statusCode == 200) {
-    return UserModel.fromJson(jsonDecode(response.body));
+    final data = jsonDecode(response.body);
+    return LoginResult(
+      accessToken: data['access_token'],
+      user: UserModel.fromJson(data['user']),
+    );
+  } else if (response.statusCode == 403) {
+    throw UnverifiedEmailException(email ?? '');
   } else {
     final error = jsonDecode(response.body);
     throw Exception(error['error'] ?? 'Login failed');
   }
 }
+Future<String> sendOtp(String email) async {
+  final url = Uri.parse('${ApiConstants.baseUrl}/users/verify-email/send');
+
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({'email': email}),
+  );
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    return data['otp_token'];
+  } else {
+    final error = jsonDecode(response.body);
+    throw Exception(error['error'] ?? 'Failed to send code');
+  }
+}
+
+Future<void> confirmOtp(String otpToken, String otp) async {
+  final url = Uri.parse('${ApiConstants.baseUrl}/users/verify-email/confirm');
+
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({'otp_token': otpToken, 'otp': otp}),
+  );
+
+  if (response.statusCode != 200) {
+    final error = jsonDecode(response.body);
+    throw Exception(error['error'] ?? 'Invalid or expired code');
+  }
+}
+
 }

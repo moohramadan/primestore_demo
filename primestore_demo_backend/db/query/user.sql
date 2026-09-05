@@ -32,3 +32,9 @@ RETURNING *;
 -- name: DeleteUser :exec
 DELETE FROM users
 WHERE id = $1;
+
+-- name: VerifyUserEmail :exec
+UPDATE users
+SET is_verified = true
+WHERE id = $1;
+

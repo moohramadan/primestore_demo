@@ -33,4 +33,5 @@ type User struct {
 	PasswordHash string         `json:"password_hash"`
 	Phone        sql.NullString `json:"phone"`
 	CreatedAt    sql.NullTime   `json:"created_at"`
+	IsVerified   bool           `json:"is_verified"`
 }

@@ -1,5 +1,6 @@
 
 import 'package:demo_project/features/autentication/screens/login/login%20screen.dart';
+import 'package:demo_project/features/autentication/screens/otp/otp.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 
@@ -16,23 +17,24 @@ class SignupController extends GetxController {
   final _authController = AuthController();
 
   Future<void> signUp() async {
-    isLoading.value = true;
-    try {
-      await _authController.signUp(
-        name: nameController.text,
-        email: emailController.text,
-        password: passwordController.text,
-        confirmPassword: confirmPasswordController.text,
-        phone: phoneController.text,
-      );
-      Get.snackbar('Success', 'Account created!', backgroundColor: Colors.green, colorText: Colors.white);
-      Get.to(() => LoginScreen());
-    } catch (e) {
-      Get.snackbar('Error', e.toString(), backgroundColor: Colors.red, colorText: Colors.white);
-    } finally {
-      isLoading.value = false;
-    }
+  isLoading.value = true;
+  try {
+    await _authController.signUp(
+      name: nameController.text,
+      email: emailController.text,
+      password: passwordController.text,
+      confirmPassword: confirmPasswordController.text,
+      phone: phoneController.text,
+    );
+    Get.snackbar('Success', 'Account created!');
+    Get.to(() => OtpScreen(email: emailController.text));
+  } catch (e) {
+    Get.snackbar('Error', e.toString());
+  } finally {
+    isLoading.value = false;
   }
+}
+
 
   @override
   void onClose() {

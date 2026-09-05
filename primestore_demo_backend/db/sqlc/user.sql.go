@@ -15,7 +15,7 @@ INSERT INTO users (
   name, email, password_hash, phone
 ) VALUES (
   $1, $2, $3, $4
-) RETURNING id, name, email, password_hash, phone, created_at
+) RETURNING id, name, email, password_hash, phone, created_at, is_verified
 `
 
 type CreateUserParams struct {
@@ -40,6 +40,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.PasswordHash,
 		&i.Phone,
 		&i.CreatedAt,
+		&i.IsVerified,
 	)
 	return i, err
 }
@@ -55,7 +56,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id int32) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, name, email, password_hash, phone, created_at FROM users
+SELECT id, name, email, password_hash, phone, created_at, is_verified FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -69,12 +70,13 @@ func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 		&i.PasswordHash,
 		&i.Phone,
 		&i.CreatedAt,
+		&i.IsVerified,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, email, password_hash, phone, created_at FROM users
+SELECT id, name, email, password_hash, phone, created_at, is_verified FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -88,12 +90,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.PasswordHash,
 		&i.Phone,
 		&i.CreatedAt,
+		&i.IsVerified,
 	)
 	return i, err
 }
 
 const getUserByPhone = `-- name: GetUserByPhone :one
-SELECT id, name, email, password_hash, phone, created_at FROM users
+SELECT id, name, email, password_hash, phone, created_at, is_verified FROM users
 WHERE phone = $1 LIMIT 1
 `
 
@@ -107,12 +110,13 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phone sql.NullString) (Use
 		&i.PasswordHash,
 		&i.Phone,
 		&i.CreatedAt,
+		&i.IsVerified,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, name, email, password_hash, phone, created_at FROM users
+SELECT id, name, email, password_hash, phone, created_at, is_verified FROM users
 ORDER BY id
 LIMIT $1
 OFFSET $2
@@ -139,6 +143,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.PasswordHash,
 			&i.Phone,
 			&i.CreatedAt,
+			&i.IsVerified,
 		); err != nil {
 			return nil, err
 		}
@@ -157,7 +162,7 @@ const updateUserPhone = `-- name: UpdateUserPhone :one
 UPDATE users
 SET phone = $2
 WHERE id = $1
-RETURNING id, name, email, password_hash, phone, created_at
+RETURNING id, name, email, password_hash, phone, created_at, is_verified
 `
 
 type UpdateUserPhoneParams struct {
@@ -175,6 +180,18 @@ func (q *Queries) UpdateUserPhone(ctx context.Context, arg UpdateUserPhoneParams
 		&i.PasswordHash,
 		&i.Phone,
 		&i.CreatedAt,
+		&i.IsVerified,
 	)
 	return i, err
+}
+
+const verifyUserEmail = `-- name: VerifyUserEmail :exec
+UPDATE users
+SET is_verified = true
+WHERE id = $1
+`
+
+func (q *Queries) VerifyUserEmail(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, verifyUserEmail, id)
+	return err
 }
