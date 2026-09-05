@@ -1,7 +1,10 @@
-import 'package:demo_project/features_buyer/autentication/screens/login/widgets/glass_login_slider.dart';
-import 'package:demo_project/features_buyer/shop/screens/buyer_home/buyer_navigation.dart';
+
+
+import 'package:demo_project/features/autentication/screens/login/widgets/glass_login_slider.dart';
+import 'package:demo_project/features/shop/screens/navigation%20menu.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+
 import 'auth_controller.dart';
 // wherever this lives
 
@@ -24,7 +27,7 @@ Future<void> login() async {
       password: passwordController.text,
     );
     Get.snackbar('Success', 'Logged in!', backgroundColor: Colors.green, colorText: Colors.white);
-    Get.to(() => BuyerNavigation());
+    Get.to(() => NavigationMenu());
   } catch (e) {
     Get.snackbar('Error', e.toString(), backgroundColor: Colors.red, colorText: Colors.white);
   } finally {

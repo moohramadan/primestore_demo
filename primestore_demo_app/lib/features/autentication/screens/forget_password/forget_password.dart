@@ -1,9 +1,11 @@
 import 'package:demo_project/common/widgets/buttons/elevevated_button.dart';
 import 'package:demo_project/common/widgets/textfield/textfield_rounded.dart';
 import 'package:demo_project/common/widgets/appbar/appbar.dart';
-import 'package:demo_project/features/autentication/screens/login/widgets/login_slider.dart';
+import 'package:demo_project/features/autentication/screens/login/widgets/glass_login_slider.dart';
+
 
 import 'package:demo_project/features/autentication/screens/otp/otp.dart';
+
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/image_strings.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
@@ -20,7 +22,7 @@ class ForgetPasswordScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<SlideController>();
+    final controller = Get.find<GlassSlideController>();
   
     final dark = THelperFunctions.isDarkMode(context);
     return Scaffold(
@@ -37,7 +39,7 @@ class ForgetPasswordScreen extends StatelessWidget {
           SizedBox(height: TSizes.spaceBtwInputFields,),
           Text("Enter your registered mobile number in the field below", style: Theme.of(context).textTheme.titleLarge, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,),
           SizedBox(height: TSizes.spaceBtwSections,),
-          LoginSlider(),
+          GlassLoginSlider(),
           SizedBox(height: TSizes.spaceBtwSections,),
           Obx(() {
           if (controller.isEmail.value) {

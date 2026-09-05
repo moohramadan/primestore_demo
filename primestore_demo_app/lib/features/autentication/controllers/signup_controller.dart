@@ -1,6 +1,8 @@
-import 'package:demo_project/features_buyer/autentication/screens/login/login%20screen.dart';
+
+import 'package:demo_project/features/autentication/screens/login/login%20screen.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+
 import 'auth_controller.dart';
 
 class SignupController extends GetxController {
@@ -24,7 +26,7 @@ class SignupController extends GetxController {
         phone: phoneController.text,
       );
       Get.snackbar('Success', 'Account created!', backgroundColor: Colors.green, colorText: Colors.white);
-      Get.to(() => BuyerLoginScreen());
+      Get.to(() => LoginScreen());
     } catch (e) {
       Get.snackbar('Error', e.toString(), backgroundColor: Colors.red, colorText: Colors.white);
     } finally {

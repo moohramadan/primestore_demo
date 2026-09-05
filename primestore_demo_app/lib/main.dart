@@ -1,4 +1,5 @@
-import 'package:demo_project/features_buyer/autentication/screens/login/login%20screen.dart';
+import 'package:demo_project/features/autentication/screens/login/login%20screen.dart';
+
 
 
 import 'package:demo_project/utils/theme/theme.dart';
@@ -17,7 +18,7 @@ void main() {
       themeMode: ThemeMode.system,
       theme: TAppTheme.lightTheme,
       darkTheme: TAppTheme.darkTheme,
-      home:  BuyerLoginScreen(),
+      home:  LoginScreen(),
     );
   }
 }

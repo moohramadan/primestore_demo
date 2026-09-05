@@ -1,12 +1,12 @@
 import 'package:demo_project/common/widgets/glass_morphism/glass_morphism_container.dart';
 import 'package:demo_project/common/widgets/images/t_rounded_image.dart';
 import 'package:demo_project/common/widgets/texts/t_create_account_question.dart';
-import 'package:demo_project/features_buyer/autentication/controllers/login_controller.dart';
-import 'package:demo_project/features_buyer/autentication/screens/login/widgets/blob.dart';
-import 'package:demo_project/features_buyer/autentication/screens/login/widgets/glass_login_slider.dart';
-import 'package:demo_project/features_buyer/autentication/screens/login/widgets/glass_social_buttons.dart';
-import 'package:demo_project/features_buyer/autentication/screens/login/widgets/glass_text_fied.dart';
-import 'package:demo_project/features_buyer/autentication/screens/signup.dart/signup%20screen.dart';
+import 'package:demo_project/features/autentication/controllers/login_controller.dart';
+import 'package:demo_project/features/autentication/screens/login/widgets/blob.dart';
+import 'package:demo_project/features/autentication/screens/login/widgets/glass_login_slider.dart';
+import 'package:demo_project/features/autentication/screens/login/widgets/glass_social_buttons.dart';
+import 'package:demo_project/features/autentication/screens/login/widgets/glass_text_fied.dart';
+import 'package:demo_project/features/autentication/screens/signup.dart/signup%20screen.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/image_strings.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
@@ -17,8 +17,8 @@ import 'package:iconsax/iconsax.dart';
 
 // ^ adjust this import path to wherever TGlassMorphism actually lives in your project
 
-class BuyerLoginScreen extends StatelessWidget {
-  const BuyerLoginScreen({super.key});
+class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
 
   // A ValueNotifier lets us keep this widget stateless while still driving
   // small, local UI state (here: password obscure/reveal) via
@@ -223,7 +223,7 @@ final loginController = Get.find<LoginController>();
                   ),
                   const SizedBox(height: 20),
                   
-                   TQuestionTextButton(question: "Don't have an account?", answer: ' Sign Up', onTap: () => Get.to(() => BuyerSignupScreen()),)
+                   TQuestionTextButton(question: "Don't have an account?", answer: ' Sign Up', onTap: () => Get.to(() => SignupScreen()),)
                    
                 ],
               ),

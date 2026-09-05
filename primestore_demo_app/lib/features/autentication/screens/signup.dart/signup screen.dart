@@ -2,10 +2,10 @@
 
 import 'package:demo_project/common/widgets/glass_morphism/glass_morphism_container.dart';
 import 'package:demo_project/common/widgets/texts/t_create_account_question.dart';
-import 'package:demo_project/features_buyer/autentication/controllers/signup_controller.dart';
-import 'package:demo_project/features_buyer/autentication/screens/login/login%20screen.dart';
-import 'package:demo_project/features_buyer/autentication/screens/login/widgets/blob.dart';
-import 'package:demo_project/features_buyer/autentication/screens/login/widgets/glass_text_fied.dart';
+import 'package:demo_project/features/autentication/controllers/signup_controller.dart';
+import 'package:demo_project/features/autentication/screens/login/login%20screen.dart';
+import 'package:demo_project/features/autentication/screens/login/widgets/blob.dart';
+import 'package:demo_project/features/autentication/screens/login/widgets/glass_text_fied.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:flutter/material.dart';
@@ -15,8 +15,8 @@ import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:iconsax/iconsax.dart';
 
-class BuyerSignupScreen extends StatelessWidget {
-  BuyerSignupScreen({super.key});
+class SignupScreen extends StatelessWidget {
+  SignupScreen({super.key});
 
   // Same pattern as LoginScreen: keep the widget stateless, drive the
   // checkbox's on/off visual with a ValueNotifier + ValueListenableBuilder.
@@ -250,7 +250,7 @@ class BuyerSignupScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  Center(child: TQuestionTextButton(question: 'Already have an account', answer: ' Sign in', onTap: () => Get.to(() => BuyerLoginScreen()))),
+                  Center(child: TQuestionTextButton(question: 'Already have an account', answer: ' Sign in', onTap: () => Get.to(() =>LoginScreen()))),
                   
                 ],
               ),
