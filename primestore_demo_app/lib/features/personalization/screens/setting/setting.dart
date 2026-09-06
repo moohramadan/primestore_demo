@@ -1,5 +1,7 @@
 
+import 'package:demo_project/common/widgets/buttons/elevevated_button.dart';
 import 'package:demo_project/common/widgets/texts/section_heading.dart';
+import 'package:demo_project/features/autentication/controllers/logout_controller.dart';
 import 'package:demo_project/features/personalization/screens/setting/widgets/profile_box.dart';
 import 'package:demo_project/features/personalization/screens/setting/widgets/setting_box.dart';
 import 'package:demo_project/utils/constants/colors.dart';
@@ -17,6 +19,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
   final dark =THelperFunctions.isDarkMode(context);
+  Get.put(LogoutController());
     return Scaffold(
       
       body: Stack(
@@ -137,6 +140,15 @@ class SettingsScreen extends StatelessWidget {
                 showSubText: true,
                 onTap: () {},
               ),
+              TRoundedElevatedButton(
+  color: TColors.error, // or whatever your "destructive action" color is
+  text: 'Log out',
+  ShowIcon: true,
+  icon: Icons.logout, 
+  onpressed:  () => Get.find<LogoutController>().handleLogout(),
+
+),
+
             ],
           ),
         ),

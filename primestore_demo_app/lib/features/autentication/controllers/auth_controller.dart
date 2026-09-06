@@ -4,13 +4,22 @@ import '../../../utils/constants/api_constants.dart';
 import '../models/user_model.dart';
 class LoginResult {
   final String accessToken;
+  final String refreshToken;
   final UserModel user;
 
-  LoginResult({required this.accessToken, required this.user});
+  LoginResult({required this.accessToken, required this.refreshToken, required this.user});
 }
+  
 class UnverifiedEmailException implements Exception {
   final String email;
   UnverifiedEmailException(this.email);
+}
+class RefreshResult {
+  final String accessToken;
+  final String refreshToken;
+  final UserModel user;
+
+  RefreshResult({required this.accessToken, required this.refreshToken, required this.user});
 }
 
 class AuthController {
@@ -62,12 +71,14 @@ class AuthController {
   );
 
   if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
-    return LoginResult(
-      accessToken: data['access_token'],
-      user: UserModel.fromJson(data['user']),
-    );
-  } else if (response.statusCode == 403) {
+  final data = jsonDecode(response.body);
+  return LoginResult(
+    accessToken: data['access_token'],
+    refreshToken: data['refresh_token'],
+    user: UserModel.fromJson(data['user']),
+  );
+}
+else if (response.statusCode == 403) {
     throw UnverifiedEmailException(email ?? '');
   } else {
     final error = jsonDecode(response.body);
@@ -106,5 +117,41 @@ Future<void> confirmOtp(String otpToken, String otp) async {
     throw Exception(error['error'] ?? 'Invalid or expired code');
   }
 }
+
+
+Future<RefreshResult> refreshSession(String refreshToken) async {
+  final url = Uri.parse('${ApiConstants.baseUrl}/users/refresh');
+
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({'refresh_token': refreshToken}),
+  );
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    return RefreshResult(
+      accessToken: data['access_token'],
+      refreshToken: data['refresh_token'],
+      user: UserModel.fromJson(data['user']),
+    );
+  } else {
+    throw Exception('Session expired');
+  }
+}
+Future<void> logout(String refreshToken) async {
+  final url = Uri.parse('${ApiConstants.baseUrl}/users/logout');
+  try {
+    await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'refresh_token': refreshToken}),
+    );
+  } catch (_) {
+    // ignore network errors — logging out locally should still succeed
+  }
+}
+
+
 
 }

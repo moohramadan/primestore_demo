@@ -1,5 +1,7 @@
+import 'package:demo_project/features/autentication/controllers/session__controller.dart';
 import 'package:demo_project/features/autentication/controllers/user_controller.dart';
 import 'package:demo_project/features/autentication/screens/login/login%20screen.dart';
+import 'package:demo_project/features/shop/screens/navigation%20menu.dart';
 
 
 
@@ -11,8 +13,30 @@ import 'package:get/get_navigation/src/root/get_material_app.dart';
 
 void main() {
   Get.put(UserController(), permanent: true);
-  runApp(const MyApp());
+  runApp(MyApp());
 }
+
+class AppEntryPoint extends StatelessWidget {
+  const AppEntryPoint({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final sessionController = Get.put(SessionController());
+
+    return FutureBuilder<bool>(
+      future: sessionController.autoLoginFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+        final loggedIn = snapshot.data ?? false;
+        return loggedIn ? NavigationMenu() : LoginScreen();
+      },
+    );
+  }
+}
+
+
  class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -22,7 +46,7 @@ void main() {
       themeMode: ThemeMode.system,
       theme: TAppTheme.lightTheme,
       darkTheme: TAppTheme.darkTheme,
-      home:  LoginScreen(),
+      home: const AppEntryPoint(),
     );
   }
 }

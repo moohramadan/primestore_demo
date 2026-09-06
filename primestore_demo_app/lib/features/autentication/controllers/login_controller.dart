@@ -4,6 +4,7 @@ import 'package:demo_project/features/autentication/controllers/user_controller.
 import 'package:demo_project/features/autentication/screens/login/widgets/glass_login_slider.dart';
 import 'package:demo_project/features/autentication/screens/otp/otp.dart';
 import 'package:demo_project/features/shop/screens/navigation%20menu.dart';
+import 'package:demo_project/utils/local_storage/secure_storage_service.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 
@@ -29,18 +30,22 @@ Future<void> login() async {
       password: passwordController.text,
     );
     Get.find<UserController>().setSession(result.user, result.accessToken);
+    await SecureStorageService.saveTokens(
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    );
     Get.snackbar('Success', 'Logged in!');
     Get.to(() => NavigationMenu());
   } on UnverifiedEmailException catch (e) {
-  Get.snackbar('Verify your email', 'Please verify your email to continue.');
-  Get.to(() => OtpScreen(email: emailController.text));
-}
-catch (e) {
+    Get.snackbar('Verify your email', 'Please verify your email to continue.');
+    Get.to(() => OtpScreen(email: emailController.text));
+  } catch (e) {
     Get.snackbar('Error', e.toString());
   } finally {
     isLoading.value = false;
   }
 }
+
 
 
   @override

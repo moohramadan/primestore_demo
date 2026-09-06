@@ -3,8 +3,9 @@ package util
 import (
 	"errors"
 	"time"
-
+     "encoding/hex"
 	"github.com/golang-jwt/jwt/v5"
+	"crypto/rand"
 )
 
 var ErrInvalidToken = errors.New("invalid token")
@@ -80,4 +81,12 @@ func (maker *TokenMaker) VerifyOTPToken(tokenStr string) (*OTPClaims, error) {
 	}
 	return claims, nil
 }
+func GenerateRefreshToken() (string, error) {
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
+}
+
 

@@ -25,9 +25,11 @@ type userResponse struct {
 	Phone string `json:"phone"`
 }
 type loginResponse struct {
-	AccessToken string       `json:"access_token"`
-	User        userResponse `json:"user"`
+	AccessToken  string       `json:"access_token"`
+	RefreshToken string       `json:"refresh_token"`
+	User         userResponse `json:"user"`
 }
+
 type sendOtpRequest struct {
 	Email string `json:"email" binding:"required,email"`
 }
@@ -130,22 +132,40 @@ func (server *Server) login(ctx *gin.Context) {
 	return
 }
 
-	accessToken, err := server.tokenMaker.CreateToken(int64(user.ID), 24*time.Hour)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	accessToken, err := server.tokenMaker.CreateToken(int64(user.ID), 1*time.Hour)
+if err != nil {
+	ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	return
+}
 
-	rsp := loginResponse{
-		AccessToken: accessToken,
-		User: userResponse{
-			ID:    int64(user.ID),
-			Name:  user.Name,
-			Email: user.Email,
-			Phone: user.Phone.String,
-		},
-	}
-	ctx.JSON(http.StatusOK, rsp)
+refreshToken, err := util.GenerateRefreshToken()
+if err != nil {
+	ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	return
+}
+
+_, err = server.store.CreateRefreshToken(ctx, db.CreateRefreshTokenParams{
+	UserID:    user.ID,
+	Token:     refreshToken,
+	ExpiresAt: time.Now().Add(30 * 24 * time.Hour),
+})
+if err != nil {
+	ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	return
+}
+
+rsp := loginResponse{
+	AccessToken:  accessToken,
+	RefreshToken: refreshToken,
+	User: userResponse{
+		ID:    int64(user.ID),
+		Name:  user.Name,
+		Email: user.Email,
+		Phone: user.Phone.String,
+	},
+}
+ctx.JSON(http.StatusOK, rsp)
+
 
 }
 func (server *Server) sendOtp(ctx *gin.Context) {
@@ -213,3 +233,97 @@ func (server *Server) confirmOtp(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "email verified"})
 }
+type refreshRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+type refreshResponse struct {
+	AccessToken  string       `json:"access_token"`
+	RefreshToken string       `json:"refresh_token"`
+	User         userResponse `json:"user"`
+}
+
+
+func (server *Server) refresh(ctx *gin.Context) {
+	var req refreshRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	stored, err := server.store.GetRefreshToken(ctx, req.RefreshToken)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired refresh token"})
+		return
+	}
+
+	if time.Now().After(stored.ExpiresAt) {
+		server.store.DeleteRefreshToken(ctx, req.RefreshToken)
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired refresh token"})
+		return
+	}
+
+	if err := server.store.DeleteRefreshToken(ctx, req.RefreshToken); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	newAccessToken, err := server.tokenMaker.CreateToken(int64(stored.UserID), 1*time.Hour)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	newRefreshToken, err := util.GenerateRefreshToken()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	_, err = server.store.CreateRefreshToken(ctx, db.CreateRefreshTokenParams{
+		UserID:    stored.UserID,
+		Token:     newRefreshToken,
+		ExpiresAt: time.Now().Add(30 * 24 * time.Hour),
+	})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// NEW: fetch the user so the response can carry their info too
+	user, err := server.store.GetUser(ctx, stored.UserID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, refreshResponse{
+		AccessToken:  newAccessToken,
+		RefreshToken: newRefreshToken,
+		User: userResponse{
+			ID:    int64(user.ID),
+			Name:  user.Name,
+			Email: user.Email,
+			Phone: user.Phone.String,
+		},
+	})
+}
+type logoutRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+func (server *Server) logout(ctx *gin.Context) {
+	var req logoutRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := server.store.DeleteRefreshToken(ctx, req.RefreshToken); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "logged out"})
+}
+

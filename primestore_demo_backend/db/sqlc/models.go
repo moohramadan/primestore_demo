@@ -6,6 +6,7 @@ package sqlc
 
 import (
 	"database/sql"
+	"time"
 )
 
 type Category struct {
@@ -24,6 +25,14 @@ type Product struct {
 	StockQty    int32          `json:"stock_qty"`
 	ImageUrl    sql.NullString `json:"image_url"`
 	CreatedAt   sql.NullTime   `json:"created_at"`
+}
+
+type RefreshToken struct {
+	ID        int32        `json:"id"`
+	UserID    int32        `json:"user_id"`
+	Token     string       `json:"token"`
+	ExpiresAt time.Time    `json:"expires_at"`
+	CreatedAt sql.NullTime `json:"created_at"`
 }
 
 type User struct {
