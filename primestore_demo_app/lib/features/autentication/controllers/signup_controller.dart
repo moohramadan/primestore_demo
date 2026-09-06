@@ -1,10 +1,9 @@
 
-import 'package:demo_project/features/autentication/screens/login/login%20screen.dart';
 import 'package:demo_project/features/autentication/screens/otp/otp.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 
-import 'auth_controller.dart';
+import 'package:demo_project/data/repositories/auth_repository.dart';
 
 class SignupController extends GetxController {
   final nameController = TextEditingController();

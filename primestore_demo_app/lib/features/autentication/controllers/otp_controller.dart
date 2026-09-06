@@ -1,7 +1,7 @@
 import 'package:demo_project/features/autentication/screens/login/login%20screen.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
-import 'auth_controller.dart';
+import 'package:demo_project/data/repositories/auth_repository.dart';
 
 class OtpController extends GetxController {
   final pinController = TextEditingController();

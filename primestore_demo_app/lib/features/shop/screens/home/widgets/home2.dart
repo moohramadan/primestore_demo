@@ -45,8 +45,24 @@ class Home2 extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(width: 200, child: Flexible(child: Text('Welcome', overflow: TextOverflow.ellipsis, maxLines: 1, style: Theme.of(context).textTheme.headlineSmall, ))),
-                  SizedBox(width: 150, child: Flexible(child: Text("@mooh", overflow: TextOverflow.ellipsis, maxLines: 1, style: Theme.of(context).textTheme.bodySmall, ))),
+                  SizedBox(
+                    width: 200,
+                    child: Text(
+                      'Welcome',
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ),
+                  SizedBox(
+                    width: 150,
+                    child: Text(
+                      '@mooh',
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
                 ],
               ),
               SizedBox(width: 60,),

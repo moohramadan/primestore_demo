@@ -326,4 +326,21 @@ func (server *Server) logout(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "logged out"})
 }
+func (server *Server) getMe(ctx *gin.Context) {
+	claims := ctx.MustGet(authorizationPayloadKey).(*util.UserClaims)
+
+	user, err := server.store.GetUser(ctx, int32(claims.UserID))
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, userResponse{
+		ID:    int64(user.ID),
+		Name:  user.Name,
+		Email: user.Email,
+		Phone: user.Phone.String,
+	})
+}
+
 

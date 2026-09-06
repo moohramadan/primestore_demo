@@ -1,4 +1,5 @@
-import 'package:demo_project/features/autentication/controllers/auth_controller.dart';
+
+import 'package:demo_project/data/repositories/auth_repository.dart';
 import 'package:demo_project/features/autentication/controllers/user_controller.dart';
 import 'package:demo_project/features/autentication/screens/login/login%20screen.dart';
 import 'package:demo_project/utils/local_storage/secure_storage_service.dart';

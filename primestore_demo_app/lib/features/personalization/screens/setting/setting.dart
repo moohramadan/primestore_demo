@@ -2,8 +2,11 @@
 import 'package:demo_project/common/widgets/buttons/elevevated_button.dart';
 import 'package:demo_project/common/widgets/texts/section_heading.dart';
 import 'package:demo_project/features/autentication/controllers/logout_controller.dart';
+import 'package:demo_project/features/autentication/controllers/user_controller.dart';
+import 'package:demo_project/features/personalization/controllers/profile_controller.dart';
 import 'package:demo_project/features/personalization/screens/setting/widgets/profile_box.dart';
 import 'package:demo_project/features/personalization/screens/setting/widgets/setting_box.dart';
+import 'package:demo_project/features/personalization/screens/user_profile/personal%20info%20screen.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 
 
@@ -20,6 +23,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
   final dark =THelperFunctions.isDarkMode(context);
   Get.put(LogoutController());
+  final userController = Get.find<UserController>();
     return Scaffold(
       
       body: Stack(
@@ -33,7 +37,12 @@ class SettingsScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: TSizes.defaultSpace, horizontal:  TSizes.sm),
           child: Column(
             children: [
-              TProfileHeader(name: 'Muhammad Ramadan', username: 'moohramadan'),
+              Obx(() => TProfileHeader(
+                        name: userController.currentUser.value?.name ?? '',
+                        username: 'moohramadan',
+                        onEditProfile: () => Get.to(() => const PersonalInfoScreen()),
+                      )),
+
               const SizedBox(height: TSizes.spaceBtwItems),
               /// -- Account Settings Section
               TSectionHeading(

@@ -1,7 +1,8 @@
 import 'dart:convert';
+import 'package:demo_project/features/autentication/models/user_model.dart';
 import 'package:http/http.dart' as http;
 import '../../../utils/constants/api_constants.dart';
-import '../models/user_model.dart';
+
 class LoginResult {
   final String accessToken;
   final String refreshToken;
@@ -149,6 +150,21 @@ Future<void> logout(String refreshToken) async {
     );
   } catch (_) {
     // ignore network errors — logging out locally should still succeed
+  }
+}
+Future<UserModel> getMe(String accessToken) async {
+  final url = Uri.parse('${ApiConstants.baseUrl}/users/me');
+
+  final response = await http.get(
+    url,
+    headers: {'Authorization': 'Bearer $accessToken'},
+  );
+
+  if (response.statusCode == 200) {
+    return UserModel.fromJson(jsonDecode(response.body));
+  } else {
+    final error = jsonDecode(response.body);
+    throw Exception(error['error'] ?? 'Failed to load profile');
   }
 }
 

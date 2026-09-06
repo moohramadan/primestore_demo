@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'auth_controller.dart';
+import 'package:demo_project/data/repositories/auth_repository.dart';
 import 'user_controller.dart';
 import '../../../utils/local_storage/secure_storage_service.dart'; // adjust path
 

@@ -27,6 +27,8 @@ func NewServer(store db.Queries, tokenMaker *util.TokenMaker, mailer *util.Maile
 	router.POST("/users/verify-email/confirm", server.confirmOtp)
 	router.POST("/users/refresh", server.refresh)
     router.POST("/users/logout", server.logout)
+    authRoutes := router.Group("/").Use(authMiddleware(server))
+    authRoutes.GET("/users/me", server.getMe)
 
 	server.router = router
 	return server
