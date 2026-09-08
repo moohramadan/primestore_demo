@@ -9,22 +9,47 @@ import (
 	"time"
 )
 
+type Brand struct {
+	ID         int32          `json:"id"`
+	Name       string         `json:"name"`
+	LogoUrl    sql.NullString `json:"logo_url"`
+	IsVerified bool           `json:"is_verified"`
+	CreatedAt  sql.NullTime   `json:"created_at"`
+}
+
 type Category struct {
-	ID        int32        `json:"id"`
-	Name      string       `json:"name"`
-	CreatedAt sql.NullTime `json:"created_at"`
+	ID        int32          `json:"id"`
+	Name      string         `json:"name"`
+	CreatedAt sql.NullTime   `json:"created_at"`
+	Icon      sql.NullString `json:"icon"`
 }
 
 type Product struct {
 	ID          int32          `json:"id"`
-	SellerID    int32          `json:"seller_id"`
+	SellerID    sql.NullInt32  `json:"seller_id"`
 	CategoryID  sql.NullInt32  `json:"category_id"`
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
-	Price       string         `json:"price"`
-	StockQty    int32          `json:"stock_qty"`
-	ImageUrl    sql.NullString `json:"image_url"`
 	CreatedAt   sql.NullTime   `json:"created_at"`
+	BrandID     sql.NullInt32  `json:"brand_id"`
+	IsFeatured  bool           `json:"is_featured"`
+}
+
+type ProductImage struct {
+	ID        int32  `json:"id"`
+	ProductID int32  `json:"product_id"`
+	ImageUrl  string `json:"image_url"`
+	SortOrder int32  `json:"sort_order"`
+}
+
+type ProductVariant struct {
+	ID              int32          `json:"id"`
+	ProductID       int32          `json:"product_id"`
+	Color           sql.NullString `json:"color"`
+	Size            sql.NullString `json:"size"`
+	Price           string         `json:"price"`
+	DiscountPercent int32          `json:"discount_percent"`
+	Stock           int32          `json:"stock"`
 }
 
 type RefreshToken struct {

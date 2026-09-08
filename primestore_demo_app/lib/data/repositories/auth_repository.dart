@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:demo_project/features/autentication/models/user_model.dart';
+import 'package:demo_project/features/shop/models/product_model.dart';
 import 'package:http/http.dart' as http;
 import '../../../utils/constants/api_constants.dart';
 
@@ -165,6 +166,17 @@ Future<UserModel> getMe(String accessToken) async {
   } else {
     final error = jsonDecode(response.body);
     throw Exception(error['error'] ?? 'Failed to load profile');
+  }
+}
+Future<List<ProductModel>> getFeaturedProducts() async {
+  final url = Uri.parse('${ApiConstants.baseUrl}/products/featured');
+  final response = await http.get(url);
+
+  if (response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(response.body);
+    return data.map((p) => ProductModel.fromJson(p)).toList();
+  } else {
+    throw Exception('Failed to load featured products');
   }
 }
 

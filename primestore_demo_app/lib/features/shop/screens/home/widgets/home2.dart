@@ -81,7 +81,7 @@ class Home2 extends StatelessWidget {
          TSectionHeading( title: 'Featured Products', textButtonColor: TColors.primary,),
          SizedBox(height: TSizes.spaceBtwItems,),
          
-         TGridLayout(itemCount: 8, itemBuilder: (BuildContext p1, int p2) { return const TGlassVerticalCard(); },),
+        
          SizedBox(height: TSizes.spaceBtwItems,),
          
         

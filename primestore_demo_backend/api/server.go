@@ -29,6 +29,9 @@ func NewServer(store db.Queries, tokenMaker *util.TokenMaker, mailer *util.Maile
     router.POST("/users/logout", server.logout)
     authRoutes := router.Group("/").Use(authMiddleware(server))
     authRoutes.GET("/users/me", server.getMe)
+	router.GET("/categories", server.listCategories)
+    router.GET("/products/featured", server.listFeaturedProducts)
+
 
 	server.router = router
 	return server
