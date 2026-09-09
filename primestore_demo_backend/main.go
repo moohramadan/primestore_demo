@@ -45,7 +45,12 @@ func main() {
 		os.Getenv("SMTP_FROM"),
 	)
 
-	server := api.NewServer(*store, tokenMaker, mailer)
+	googleClientID := os.Getenv("GOOGLE_CLIENT_ID")
+if googleClientID == "" {
+    log.Println("warning: GOOGLE_CLIENT_ID is not set, Google sign-in will reject every request")
+}
+
+server := api.NewServer(*store, tokenMaker, mailer, googleClientID)
 
 	err = server.Start(serverAddress)
 	if err != nil {

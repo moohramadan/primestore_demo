@@ -64,8 +64,9 @@ type User struct {
 	ID           int32          `json:"id"`
 	Name         string         `json:"name"`
 	Email        string         `json:"email"`
-	PasswordHash string         `json:"password_hash"`
+	PasswordHash sql.NullString `json:"password_hash"`
 	Phone        sql.NullString `json:"phone"`
 	CreatedAt    sql.NullTime   `json:"created_at"`
 	IsVerified   bool           `json:"is_verified"`
+	GoogleID     sql.NullString `json:"google_id"`
 }

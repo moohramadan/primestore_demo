@@ -1,16 +1,21 @@
 import 'package:demo_project/common/widgets/glass_morphism/glass_morphism_container.dart';
 import 'package:demo_project/common/widgets/images/t_rounded_image.dart';
 import 'package:demo_project/common/widgets/texts/t_create_account_question.dart';
+import 'package:demo_project/data/repositories/auth_repository.dart';
+import 'package:demo_project/data/services/google_auth_service.dart';
 import 'package:demo_project/features/autentication/controllers/login_controller.dart';
+import 'package:demo_project/features/autentication/controllers/user_controller.dart';
 import 'package:demo_project/features/autentication/screens/login/widgets/blob.dart';
 import 'package:demo_project/features/autentication/screens/login/widgets/glass_login_slider.dart';
 import 'package:demo_project/features/autentication/screens/login/widgets/glass_social_buttons.dart';
 import 'package:demo_project/features/autentication/screens/login/widgets/glass_text_fied.dart';
 import 'package:demo_project/features/autentication/screens/signup.dart/signup%20screen.dart';
+import 'package:demo_project/features/shop/screens/navigation%20menu.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/image_strings.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/constants/text_strings.dart';
+import 'package:demo_project/utils/local_storage/secure_storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
@@ -211,11 +216,41 @@ final loginController = Get.find<LoginController>();
                         const SizedBox(height: 18),
                         Row(
                           children: [
-                            SocialGlassButton(dark: dark, icon: Icons.g_mobiledata_rounded),
+                            Expanded(
+                              child: GestureDetector(
+  onTap: () async {
+    try {
+      final googleAuth = GoogleAuthService();
+      final idToken = await googleAuth.signIn();
+
+      if (idToken == null) return; // user cancelled
+
+      final authController = AuthController();
+      final result = await authController.googleSignIn(idToken);
+
+      Get.find<UserController>().setSession(result.user, result.accessToken);
+      await SecureStorageService.saveTokens(
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+      );
+
+      Get.snackbar('Success', 'Logged in!');
+      Get.to(() => NavigationMenu());
+    } catch (e) {
+      Get.snackbar('Error', e.toString());
+    }
+  },
+  child: SocialGlassButton(
+    dark: dark,
+    icon: Icons.g_mobiledata_rounded,
+  ),
+)
+,
+                            ),
                             const SizedBox(width: 10),
-                            SocialGlassButton(dark: dark, icon: Icons.apple_rounded),
+                            Expanded(child: SocialGlassButton(dark: dark, icon: Icons.apple_rounded)),
                             const SizedBox(width: 10),
-                            SocialGlassButton(dark: dark, icon: Icons.facebook_rounded),
+                            Expanded(child: SocialGlassButton(dark: dark, icon: Icons.facebook_rounded)),
                           ],
                         ),
                       ],

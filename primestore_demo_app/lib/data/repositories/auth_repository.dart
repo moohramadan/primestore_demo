@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:demo_project/data/services/google_auth_service.dart';
 import 'package:demo_project/features/autentication/models/user_model.dart';
 import 'package:demo_project/features/shop/models/product_model.dart';
 import 'package:http/http.dart' as http;
@@ -87,6 +88,30 @@ else if (response.statusCode == 403) {
     throw Exception(error['error'] ?? 'Login failed');
   }
 }
+
+
+Future<LoginResult> googleSignIn(String idToken) async {
+  final url = Uri.parse('${ApiConstants.baseUrl}/users/google-signin');
+
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({'id_token': idToken}),
+  );
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    return LoginResult(
+      accessToken: data['access_token'],
+      refreshToken: data['refresh_token'],
+      user: UserModel.fromJson(data['user']),
+    );
+  } else {
+    final error = jsonDecode(response.body);
+    throw Exception(error['error'] ?? 'Google sign-in failed');
+  }
+}
+
 Future<String> sendOtp(String email) async {
   final url = Uri.parse('${ApiConstants.baseUrl}/users/verify-email/send');
 

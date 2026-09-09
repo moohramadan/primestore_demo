@@ -61,11 +61,11 @@ func (server *Server) createUser(ctx *gin.Context) {
 		arg := db.CreateUserParams{
 		Name:         req.Name,
 		Email:        req.Email,
-		PasswordHash: hashedPassword,
+		PasswordHash: sql.NullString{String: hashedPassword, Valid: true},
 		Phone:        sql.NullString{String: req.Phone, Valid: req.Phone != ""},
 	}
 
-
+    
 	user, err := server.store.CreateUser(ctx, arg)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -118,10 +118,15 @@ func (server *Server) login(ctx *gin.Context) {
 		return
 	}
 
-	if err := util.CheckPassword(req.Password, user.PasswordHash); err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
-		return
-	}
+	if !user.PasswordHash.Valid {
+    ctx.JSON(http.StatusUnauthorized, gin.H{"error": "this account uses Google sign-in, not a password"})
+    return
+}
+
+if err := util.CheckPassword(req.Password, user.PasswordHash.String); err != nil {
+    ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+    return
+}
 
 	if !user.IsVerified {
 	ctx.JSON(http.StatusForbidden, gin.H{"error": "email not verified"})
@@ -322,6 +327,106 @@ func (server *Server) logout(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "logged out"})
 }
+type googleSignInRequest struct {
+	IDToken string `json:"id_token" binding:"required"`
+}
+
+func (server *Server) googleSignIn(ctx *gin.Context) {
+	var req googleSignInRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	claims, err := util.VerifyGoogleIDToken(ctx, req.IDToken, server.googleClientID)
+if err != nil {
+    log.Printf("google token verification failed: %v", err)
+    ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid google token"})
+    return
+}
+
+
+	if !claims.EmailVerified {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "google account email is not verified"})
+		return
+	}
+
+	googleID := sql.NullString{String: claims.Subject, Valid: true}
+
+	user, err := server.store.GetUserByGoogleID(ctx, googleID)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		// no account linked to this google id yet - does an account with this
+		// email already exist? if so, link it instead of creating a duplicate.
+		existing, existingErr := server.store.GetUserByEmail(ctx, claims.Email)
+		switch {
+		case existingErr == nil:
+			user, err = server.store.LinkGoogleAccount(ctx, db.LinkGoogleAccountParams{
+				ID:       existing.ID,
+				GoogleID: googleID,
+			})
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+		case existingErr == sql.ErrNoRows:
+			name := claims.Name
+			if name == "" {
+				name = claims.Email
+			}
+			user, err = server.store.CreateGoogleUser(ctx, db.CreateGoogleUserParams{
+				Name:     name,
+				Email:    claims.Email,
+				GoogleID: googleID,
+			})
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+		default:
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": existingErr.Error()})
+			return
+		}
+	}
+
+	accessToken, err := server.tokenMaker.CreateToken(int64(user.ID), 1*time.Hour)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	refreshToken, err := util.GenerateRefreshToken()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	_, err = server.store.CreateRefreshToken(ctx, db.CreateRefreshTokenParams{
+		UserID:    user.ID,
+		Token:     refreshToken,
+		ExpiresAt: time.Now().Add(30 * 24 * time.Hour),
+	})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, loginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		User: userResponse{
+			ID:    int64(user.ID),
+			Name:  user.Name,
+			Email: user.Email,
+			Phone: user.Phone.String,
+		},
+	})
+}
+
 func (server *Server) getMe(ctx *gin.Context) {
 	claims := ctx.MustGet(authorizationPayloadKey).(*util.UserClaims)
 

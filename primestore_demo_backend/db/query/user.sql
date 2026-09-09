@@ -17,6 +17,23 @@ WHERE email = $1 LIMIT 1;
 SELECT * FROM users
 WHERE phone = $1 LIMIT 1;
 
+-- name: GetUserByGoogleID :one
+SELECT * FROM users
+WHERE google_id = $1 LIMIT 1;
+
+-- name: CreateGoogleUser :one
+INSERT INTO users (
+  name, email, google_id, is_verified
+) VALUES (
+  $1, $2, $3, true
+) RETURNING *;
+
+-- name: LinkGoogleAccount :one
+UPDATE users
+SET google_id = $2, is_verified = true
+WHERE id = $1
+RETURNING *;
+
 -- name: ListUsers :many
 SELECT * FROM users
 ORDER BY id

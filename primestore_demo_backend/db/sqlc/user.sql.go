@@ -11,6 +11,36 @@ import (
 	"time"
 )
 
+const createGoogleUser = `-- name: CreateGoogleUser :one
+INSERT INTO users (
+  name, email, google_id, is_verified
+) VALUES (
+  $1, $2, $3, true
+) RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id
+`
+
+type CreateGoogleUserParams struct {
+	Name     string         `json:"name"`
+	Email    string         `json:"email"`
+	GoogleID sql.NullString `json:"google_id"`
+}
+
+func (q *Queries) CreateGoogleUser(ctx context.Context, arg CreateGoogleUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, createGoogleUser, arg.Name, arg.Email, arg.GoogleID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Phone,
+		&i.CreatedAt,
+		&i.IsVerified,
+		&i.GoogleID,
+	)
+	return i, err
+}
+
 const createRefreshToken = `-- name: CreateRefreshToken :one
 INSERT INTO refresh_tokens (
   user_id, token, expires_at
@@ -43,13 +73,13 @@ INSERT INTO users (
   name, email, password_hash, phone
 ) VALUES (
   $1, $2, $3, $4
-) RETURNING id, name, email, password_hash, phone, created_at, is_verified
+) RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id
 `
 
 type CreateUserParams struct {
 	Name         string         `json:"name"`
 	Email        string         `json:"email"`
-	PasswordHash string         `json:"password_hash"`
+	PasswordHash sql.NullString `json:"password_hash"`
 	Phone        sql.NullString `json:"phone"`
 }
 
@@ -69,6 +99,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Phone,
 		&i.CreatedAt,
 		&i.IsVerified,
+		&i.GoogleID,
 	)
 	return i, err
 }
@@ -122,7 +153,7 @@ func (q *Queries) GetRefreshToken(ctx context.Context, token string) (RefreshTok
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, name, email, password_hash, phone, created_at, is_verified FROM users
+SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -137,12 +168,13 @@ func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 		&i.Phone,
 		&i.CreatedAt,
 		&i.IsVerified,
+		&i.GoogleID,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, email, password_hash, phone, created_at, is_verified FROM users
+SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -157,12 +189,34 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Phone,
 		&i.CreatedAt,
 		&i.IsVerified,
+		&i.GoogleID,
+	)
+	return i, err
+}
+
+const getUserByGoogleID = `-- name: GetUserByGoogleID :one
+SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id FROM users
+WHERE google_id = $1 LIMIT 1
+`
+
+func (q *Queries) GetUserByGoogleID(ctx context.Context, googleID sql.NullString) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByGoogleID, googleID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Phone,
+		&i.CreatedAt,
+		&i.IsVerified,
+		&i.GoogleID,
 	)
 	return i, err
 }
 
 const getUserByPhone = `-- name: GetUserByPhone :one
-SELECT id, name, email, password_hash, phone, created_at, is_verified FROM users
+SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id FROM users
 WHERE phone = $1 LIMIT 1
 `
 
@@ -177,12 +231,41 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phone sql.NullString) (Use
 		&i.Phone,
 		&i.CreatedAt,
 		&i.IsVerified,
+		&i.GoogleID,
+	)
+	return i, err
+}
+
+const linkGoogleAccount = `-- name: LinkGoogleAccount :one
+UPDATE users
+SET google_id = $2, is_verified = true
+WHERE id = $1
+RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id
+`
+
+type LinkGoogleAccountParams struct {
+	ID       int32          `json:"id"`
+	GoogleID sql.NullString `json:"google_id"`
+}
+
+func (q *Queries) LinkGoogleAccount(ctx context.Context, arg LinkGoogleAccountParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, linkGoogleAccount, arg.ID, arg.GoogleID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Phone,
+		&i.CreatedAt,
+		&i.IsVerified,
+		&i.GoogleID,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, name, email, password_hash, phone, created_at, is_verified FROM users
+SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id FROM users
 ORDER BY id
 LIMIT $1
 OFFSET $2
@@ -210,6 +293,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.Phone,
 			&i.CreatedAt,
 			&i.IsVerified,
+			&i.GoogleID,
 		); err != nil {
 			return nil, err
 		}
@@ -228,7 +312,7 @@ const updateUserPhone = `-- name: UpdateUserPhone :one
 UPDATE users
 SET phone = $2
 WHERE id = $1
-RETURNING id, name, email, password_hash, phone, created_at, is_verified
+RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id
 `
 
 type UpdateUserPhoneParams struct {
@@ -247,6 +331,7 @@ func (q *Queries) UpdateUserPhone(ctx context.Context, arg UpdateUserPhoneParams
 		&i.Phone,
 		&i.CreatedAt,
 		&i.IsVerified,
+		&i.GoogleID,
 	)
 	return i, err
 }
