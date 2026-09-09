@@ -123,10 +123,6 @@ func (server *Server) login(ctx *gin.Context) {
 		return
 	}
 
-		if err := util.CheckPassword(req.Password, user.PasswordHash); err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
-		return
-	}
 	if !user.IsVerified {
 	ctx.JSON(http.StatusForbidden, gin.H{"error": "email not verified"})
 	return
