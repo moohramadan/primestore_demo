@@ -1,6 +1,8 @@
 import 'package:demo_project/features/personalization/screens/user_profile/widgets/edit_email.dart';
 import 'package:demo_project/features/personalization/screens/user_profile/widgets/edit_name.dart';
 import 'package:demo_project/features/personalization/controllers/profile_controller.dart';
+import 'package:demo_project/utils/constants/colors.dart';
+import 'package:demo_project/utils/helpers/helper_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
@@ -16,9 +18,9 @@ class PersonalInfoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(ProfileController());
-
+    final dark = THelperFunctions.isDarkMode(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,6 +112,7 @@ class _TopBar extends StatelessWidget {
 class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final dark = THelperFunctions.isDarkMode(context);
     return Stack(
       children: [
         CircleAvatar(
@@ -127,7 +130,7 @@ class _Avatar extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
             ),
-            child: const Icon(Icons.edit, size: 16),
+            child:  Icon(Icons.edit, size: 16, color: dark? TColors.black: TColors.black,),
           ),
         ),
       ],
@@ -168,12 +171,12 @@ class _InfoRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  Text(label, style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 4),
                   Row(
                     children: [
                       Flexible(
-                        child: Text(value, style: const TextStyle(fontSize: 16, color: Colors.black54)),
+                        child: Text(value, style: Theme.of(context).textTheme.titleSmall),
                       ),
                       if (verified) ...[
                         const SizedBox(width: 6),

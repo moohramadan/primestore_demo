@@ -2,6 +2,7 @@
 import 'package:demo_project/common/widgets/appbar/appbar.dart';
 import 'package:demo_project/common/widgets/custom_shapes/curved_edges/curved_edges_widget.dart';
 import 'package:demo_project/common/widgets/icons/t_circular_icon.dart';
+import 'package:demo_project/common/widgets/icons/wislist_icon.dart';
 import 'package:demo_project/common/widgets/images/t_rounded_image.dart';
 import 'package:demo_project/features/shop/models/product_model.dart';
 import 'package:demo_project/utils/constants/colors.dart';
@@ -22,15 +23,15 @@ class ProductImageController extends GetxController {
 }
 
 class TProductImageSlider extends StatelessWidget {
-  const TProductImageSlider({super.key, required this.images});
+  const TProductImageSlider({super.key, required this.images, required this.product});
 
   final List<ProductImageModel> images;
-
+   final ProductModel product;
   @override
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
     final controller = Get.put(ProductImageController());
-
+    
     return TCurvedEdgesWidget(
       child: Container(
         color: dark ? TColors.darkGrey : TColors.light,
@@ -83,10 +84,10 @@ class TProductImageSlider extends StatelessWidget {
                 ),
               ),
             ),
-            const TAppBar(
+            TAppBar(
               showBackArrow: true,
               actions: [
-                TCircularIcon(icon: Iconsax.heart5, color: Colors.red),
+                WishlistIconButton(product: product, size: 26,),
               ],
             ),
           ],

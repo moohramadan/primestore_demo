@@ -1,6 +1,7 @@
 import 'package:demo_project/features/autentication/controllers/session__controller.dart';
 import 'package:demo_project/features/autentication/controllers/user_controller.dart';
 import 'package:demo_project/features/autentication/screens/login/login%20screen.dart';
+import 'package:demo_project/features/shop/controllers/wishlist_controller.dart';
 import 'package:demo_project/features/shop/screens/navigation%20menu.dart';
 
 
@@ -13,6 +14,8 @@ import 'package:get/get_navigation/src/root/get_material_app.dart';
 
 void main() {
   Get.put(UserController(), permanent: true);
+  Get.put(WishlistController(), permanent: true);
+
   runApp(MyApp());
 }
 

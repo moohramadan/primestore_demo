@@ -1,10 +1,12 @@
 package api
 
 import (
+	"database/sql"
 	"net/http"
 
+	//db "primestore_demo_backend/db/sqlc"
+
 	"github.com/gin-gonic/gin"
-	db "primestore_demo_backend/db/sqlc"
 )
 
 type categoryResponse struct {
@@ -57,12 +59,20 @@ func (server *Server) listCategories(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
-func (server *Server) buildProductResponse(ctx *gin.Context, p db.ListFeaturedProductsRow) (productResponse, error) {
-	images, err := server.store.ListProductImages(ctx, p.ID)
+func (server *Server) buildProductResponse(
+	ctx *gin.Context,
+	id int32,
+	name string,
+	description sql.NullString,
+	isFeatured bool,
+	brandName sql.NullString,
+	brandVerified sql.NullBool,
+) (productResponse, error) {
+	images, err := server.store.ListProductImages(ctx, id)
 	if err != nil {
 		return productResponse{}, err
 	}
-	variants, err := server.store.ListProductVariants(ctx, p.ID)
+	variants, err := server.store.ListProductVariants(ctx, id)
 	if err != nil {
 		return productResponse{}, err
 	}
@@ -85,16 +95,17 @@ func (server *Server) buildProductResponse(ctx *gin.Context, p db.ListFeaturedPr
 	}
 
 	return productResponse{
-		ID:            int64(p.ID),
-		Name:          p.Name,
-		Description:   p.Description.String,
-		IsFeatured:    p.IsFeatured,
-		BrandName:     p.BrandName.String,
-		BrandVerified: p.BrandVerified.Bool,
+		ID:            int64(id),
+		Name:          name,
+		Description:   description.String,
+		IsFeatured:    isFeatured,
+		BrandName:     brandName.String,
+		BrandVerified: brandVerified.Bool,
 		Images:        imgRes,
 		Variants:      varRes,
 	}, nil
 }
+
 
 func (server *Server) listFeaturedProducts(ctx *gin.Context) {
 	products, err := server.store.ListFeaturedProducts(ctx)
@@ -105,12 +116,13 @@ func (server *Server) listFeaturedProducts(ctx *gin.Context) {
 
 	res := make([]productResponse, 0, len(products))
 	for _, p := range products {
-		built, err := server.buildProductResponse(ctx, p)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		res = append(res, built)
-	}
+    built, err := server.buildProductResponse(ctx, p.ID, p.Name, p.Description, p.IsFeatured, p.BrandName, p.BrandVerified)
+    if err != nil {
+        ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    res = append(res, built)
+}
+
 	ctx.JSON(http.StatusOK, res)
 }

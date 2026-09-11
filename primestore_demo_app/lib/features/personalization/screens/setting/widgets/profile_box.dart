@@ -31,7 +31,7 @@ class TProfileHeader extends StatelessWidget {
       padding: const EdgeInsets.all(TSizes.md),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(25),
-        
+        color: TColors.primary.withValues(alpha: 0.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

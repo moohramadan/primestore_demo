@@ -33,7 +33,7 @@ class ProductDetail extends StatelessWidget {
         child: Column(
           children: [
             /// Product Image Slider
-            TProductImageSlider(images: product.images),
+            TProductImageSlider(images: product.images, product: product, ),
 
             /// Product Details
             Padding(

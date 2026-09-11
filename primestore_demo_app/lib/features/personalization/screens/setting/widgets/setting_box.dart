@@ -1,3 +1,4 @@
+import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:flutter/material.dart';
 
@@ -34,6 +35,7 @@ class TSettingBox extends StatelessWidget {
                   child: Icon(
                     icon,
                     size: 25,
+                    color: TColors.brand,
                   ),
                 ),
                 const SizedBox(width: TSizes.md + 5),

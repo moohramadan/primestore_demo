@@ -1,4 +1,5 @@
 import 'package:demo_project/common/widgets/glass_morphism/glass_morphism_container.dart';
+import 'package:demo_project/common/widgets/icons/wislist_icon.dart';
 import 'package:demo_project/common/widgets/texts/product_price_text.dart';
 import 'package:demo_project/common/widgets/texts/product_title_text.dart';
 import 'package:demo_project/features/shop/models/product_model.dart';
@@ -108,11 +109,11 @@ class TGlassVerticalCard extends StatelessWidget {
               child: Text('$discountPercent%'),
             ),
           ),
-        const Positioned(
-          top: 10,
-          right: 10,
-          child: TGlassMorphism(child: Icon(Iconsax.heart, color: Colors.red)),
-        ),
+         Positioned(
+      top: 8,
+      right: 8,
+      child: WishlistIconButton(product: product),
+    ),
       ],
     );
   }

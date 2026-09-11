@@ -70,3 +70,10 @@ type User struct {
 	IsVerified   bool           `json:"is_verified"`
 	GoogleID     sql.NullString `json:"google_id"`
 }
+
+type Wishlist struct {
+	ID        int64     `json:"id"`
+	UserID    int64     `json:"user_id"`
+	ProductID int64     `json:"product_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
