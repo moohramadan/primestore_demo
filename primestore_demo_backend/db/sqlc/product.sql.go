@@ -8,6 +8,8 @@ package sqlc
 import (
 	"context"
 	"database/sql"
+
+	"github.com/lib/pq"
 )
 
 const getProduct = `-- name: GetProduct :one
@@ -135,12 +137,83 @@ func (q *Queries) ListProductImages(ctx context.Context, productID int32) ([]Pro
 	return items, nil
 }
 
+const listProductImagesByProductIDs = `-- name: ListProductImagesByProductIDs :many
+SELECT id, product_id, image_url, sort_order FROM product_images
+WHERE product_id = ANY($1::int[])
+ORDER BY product_id, sort_order
+`
+
+func (q *Queries) ListProductImagesByProductIDs(ctx context.Context, productIds []int32) ([]ProductImage, error) {
+	rows, err := q.db.QueryContext(ctx, listProductImagesByProductIDs, pq.Array(productIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ProductImage
+	for rows.Next() {
+		var i ProductImage
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductID,
+			&i.ImageUrl,
+			&i.SortOrder,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listProductVariants = `-- name: ListProductVariants :many
 SELECT id, product_id, color, size, price, discount_percent, stock FROM product_variants WHERE product_id = $1 ORDER BY id
 `
 
 func (q *Queries) ListProductVariants(ctx context.Context, productID int32) ([]ProductVariant, error) {
 	rows, err := q.db.QueryContext(ctx, listProductVariants, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ProductVariant
+	for rows.Next() {
+		var i ProductVariant
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductID,
+			&i.Color,
+			&i.Size,
+			&i.Price,
+			&i.DiscountPercent,
+			&i.Stock,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listProductVariantsByProductIDs = `-- name: ListProductVariantsByProductIDs :many
+SELECT id, product_id, color, size, price, discount_percent, stock FROM product_variants
+WHERE product_id = ANY($1::int[])
+ORDER BY product_id, id
+`
+
+func (q *Queries) ListProductVariantsByProductIDs(ctx context.Context, productIds []int32) ([]ProductVariant, error) {
+	rows, err := q.db.QueryContext(ctx, listProductVariantsByProductIDs, pq.Array(productIds))
 	if err != nil {
 		return nil, err
 	}

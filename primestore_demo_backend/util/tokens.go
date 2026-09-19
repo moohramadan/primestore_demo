@@ -1,11 +1,19 @@
 package util
 
 import (
-	"errors"
-	"time"
-     "encoding/hex"
-	"github.com/golang-jwt/jwt/v5"
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"github.com/golang-jwt/jwt/v5"
+	"time"
+)
+
+const (
+	audienceAccess   = "access"
+	audienceEmailOTP = "email-otp"
 )
 
 var ErrInvalidToken = errors.New("invalid token")
@@ -16,8 +24,8 @@ type UserClaims struct {
 }
 
 type OTPClaims struct {
-	UserID int64  `json:"user_id"`
-	OTP    string `json:"otp"`
+	UserID  int64  `json:"user_id"`
+	OTPHash string `json:"otp_hash"`
 	jwt.RegisteredClaims
 }
 
@@ -35,6 +43,7 @@ func (maker *TokenMaker) CreateToken(userID int64, duration time.Duration) (stri
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Audience:  jwt.ClaimStrings{audienceAccess},
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -48,7 +57,7 @@ func (maker *TokenMaker) VerifyToken(tokenStr string) (*UserClaims, error) {
 			return nil, ErrInvalidToken
 		}
 		return []byte(maker.secretKey), nil
-	})
+	}, jwt.WithAudience(audienceAccess))
 	if err != nil || !token.Valid {
 		return nil, ErrInvalidToken
 	}
@@ -57,11 +66,12 @@ func (maker *TokenMaker) VerifyToken(tokenStr string) (*UserClaims, error) {
 
 func (maker *TokenMaker) CreateOTPToken(userID int64, otp string, duration time.Duration) (string, error) {
 	claims := OTPClaims{
-		UserID: userID,
-		OTP:    otp,
+		UserID:  userID,
+		OTPHash: maker.hashOTP(userID, otp),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Audience:  jwt.ClaimStrings{audienceEmailOTP},
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -75,7 +85,7 @@ func (maker *TokenMaker) VerifyOTPToken(tokenStr string) (*OTPClaims, error) {
 			return nil, ErrInvalidToken
 		}
 		return []byte(maker.secretKey), nil
-	})
+	}, jwt.WithAudience(audienceEmailOTP))
 	if err != nil || !token.Valid {
 		return nil, ErrInvalidToken
 	}
@@ -89,4 +99,13 @@ func GenerateRefreshToken() (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
+func (maker *TokenMaker) hashOTP(userID int64, otp string) string {
+	mac := hmac.New(sha256.New, []byte(maker.secretKey))
+	fmt.Fprintf(mac, "%d:%s", userID, otp)
+	return hex.EncodeToString(mac.Sum(nil))
+}
 
+func (maker *TokenMaker) OTPMatches(claims *OTPClaims, otp string) bool {
+	expected := maker.hashOTP(claims.UserID, otp)
+	return hmac.Equal([]byte(expected), []byte(claims.OTPHash))
+}

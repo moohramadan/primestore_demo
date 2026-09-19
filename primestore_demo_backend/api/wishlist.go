@@ -1,13 +1,13 @@
 package api
 
 import (
-	
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	db "primestore_demo_backend/db/sqlc"
 	"primestore_demo_backend/util"
+
+	"github.com/gin-gonic/gin"
 )
 
 type addWishlistRequest struct {
@@ -61,23 +61,30 @@ func (server *Server) listWishlist(ctx *gin.Context) {
 
 	products, err := server.store.ListWishlistProducts(ctx, authPayload.UserID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "could not fetch wishlist"})
+		internalError(ctx, err, "something went wrong")
 		return
 	}
 
-	res := make([]productResponse, 0, len(products))
-	for _, p := range products {
-		built, err := server.buildProductResponse(ctx, p.ID, p.Name, p.Description, p.IsFeatured, p.BrandName, p.BrandVerified)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
+	bases := make([]productBase, len(products))
+	for i, p := range products {
+		bases[i] = productBase{
+			ID:            p.ID,
+			Name:          p.Name,
+			Description:   p.Description,
+			IsFeatured:    p.IsFeatured,
+			BrandName:     p.BrandName,
+			BrandVerified: p.BrandVerified,
 		}
-		res = append(res, built)
+	}
+
+	res, err := server.buildProductResponses(ctx, bases)
+	if err != nil {
+		internalError(ctx, err, "something went wrong")
+		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"products": res})
 }
-
 
 func (server *Server) listWishlistedIDs(ctx *gin.Context) {
 	authPayload := ctx.MustGet(authorizationPayloadKey).(*util.UserClaims)

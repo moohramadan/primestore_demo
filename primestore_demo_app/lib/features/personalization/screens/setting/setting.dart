@@ -3,7 +3,7 @@ import 'package:demo_project/common/widgets/buttons/elevevated_button.dart';
 import 'package:demo_project/common/widgets/texts/section_heading.dart';
 import 'package:demo_project/features/autentication/controllers/logout_controller.dart';
 import 'package:demo_project/features/autentication/controllers/user_controller.dart';
-import 'package:demo_project/features/personalization/controllers/profile_controller.dart';
+import 'package:demo_project/features/personalization/screens/address/adress.dart';
 import 'package:demo_project/features/personalization/screens/setting/widgets/profile_box.dart';
 import 'package:demo_project/features/personalization/screens/setting/widgets/setting_box.dart';
 import 'package:demo_project/features/personalization/screens/user_profile/personal%20info%20screen.dart';
@@ -56,15 +56,8 @@ class SettingsScreen extends StatelessWidget {
                     title: "Account Settings",
                     showActionButton: false,
                   ),
-                  TSettingBox(
-                  icon: Iconsax.safe_home,
-                  text: 'My Addresses',
-                  subText: 'Set shopping delivery address',
-                  showSubText: true,
-                  onTap: () {},
-                ),
-                 const SizedBox(height: TSizes.spaceBtwItems),
-                // My Cart
+                  const SizedBox(height: TSizes.spaceBtwItems),
+                   // My Cart
                 TSettingBox(
                   icon: Iconsax.shopping_cart,
                   text: 'My Cart',
@@ -72,6 +65,15 @@ class SettingsScreen extends StatelessWidget {
                   showSubText: true,
                   onTap: () {},
                 ),
+                const SizedBox(height: TSizes.spaceBtwItems),
+                  TSettingBox(
+                  icon: Iconsax.safe_home,
+                  text: 'My Addresses',
+                  subText: 'Set shopping delivery address',
+                  showSubText: true,
+                  onTap: () => Get.to(() => AdressScreen()),
+                ),
+               
                  const SizedBox(height: TSizes.spaceBtwItems),
                 // My Orders
                 TSettingBox(

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 
@@ -44,7 +45,7 @@ type productResponse struct {
 func (server *Server) listCategories(ctx *gin.Context) {
 	categories, err := server.store.ListCategories(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		internalError(ctx, err, "something went wrong")
 		return
 	}
 
@@ -59,70 +60,106 @@ func (server *Server) listCategories(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
-func (server *Server) buildProductResponse(
-	ctx *gin.Context,
-	id int32,
-	name string,
-	description sql.NullString,
-	isFeatured bool,
-	brandName sql.NullString,
-	brandVerified sql.NullBool,
-) (productResponse, error) {
-	images, err := server.store.ListProductImages(ctx, id)
+func (server *Server) listFeaturedProducts(ctx *gin.Context) {
+	products, err := server.store.ListFeaturedProducts(ctx)
 	if err != nil {
-		return productResponse{}, err
-	}
-	variants, err := server.store.ListProductVariants(ctx, id)
-	if err != nil {
-		return productResponse{}, err
+		internalError(ctx, err, "something went wrong")
+		return
 	}
 
-	imgRes := make([]imageResponse, len(images))
-	for i, img := range images {
-		imgRes[i] = imageResponse{ID: int64(img.ID), ImageURL: img.ImageUrl, SortOrder: img.SortOrder}
+	bases := make([]productBase, len(products))
+	for i, p := range products {
+		bases[i] = productBase{
+			ID:            p.ID,
+			Name:          p.Name,
+			Description:   p.Description,
+			IsFeatured:    p.IsFeatured,
+			BrandName:     p.BrandName,
+			BrandVerified: p.BrandVerified,
+		}
 	}
 
-	varRes := make([]variantResponse, len(variants))
-	for i, v := range variants {
-		varRes[i] = variantResponse{
+	res, err := server.buildProductResponses(ctx, bases)
+	if err != nil {
+		internalError(ctx, err, "something went wrong")
+		return
+	}
+
+	ctx.JSON(http.StatusOK, res)
+}
+
+type productBase struct {
+	ID            int32
+	Name          string
+	Description   sql.NullString
+	IsFeatured    bool
+	BrandName     sql.NullString
+	BrandVerified sql.NullBool
+}
+
+func (server *Server) buildProductResponses(ctx context.Context, bases []productBase) ([]productResponse, error) {
+	res := make([]productResponse, 0, len(bases))
+	if len(bases) == 0 {
+		return res, nil
+	}
+
+	ids := make([]int32, len(bases))
+	for i, b := range bases {
+		ids[i] = b.ID
+	}
+
+	images, err := server.store.ListProductImagesByProductIDs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	variants, err := server.store.ListProductVariantsByProductIDs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	imagesByProduct := make(map[int32][]imageResponse)
+	for _, img := range images {
+		imagesByProduct[img.ProductID] = append(imagesByProduct[img.ProductID], imageResponse{
+			ID:        int64(img.ID),
+			ImageURL:  img.ImageUrl,
+			SortOrder: img.SortOrder,
+		})
+	}
+
+	variantsByProduct := make(map[int32][]variantResponse)
+	for _, v := range variants {
+		variantsByProduct[v.ProductID] = append(variantsByProduct[v.ProductID], variantResponse{
 			ID:              int64(v.ID),
 			Color:           v.Color.String,
 			Size:            v.Size.String,
 			Price:           v.Price,
 			DiscountPercent: v.DiscountPercent,
 			Stock:           v.Stock,
+		})
+	}
+	for _, b := range bases {
+		imgs := imagesByProduct[b.ID]
+		if imgs == nil {
+			imgs = []imageResponse{}
 		}
+
+		vars := variantsByProduct[b.ID]
+		if vars == nil {
+			vars = []variantResponse{}
+		}
+
+		res = append(res, productResponse{
+			ID:            int64(b.ID),
+			Name:          b.Name,
+			Description:   b.Description.String,
+			IsFeatured:    b.IsFeatured,
+			BrandName:     b.BrandName.String,
+			BrandVerified: b.BrandVerified.Bool,
+			Images:        imgs,
+			Variants:      vars,
+		})
 	}
 
-	return productResponse{
-		ID:            int64(id),
-		Name:          name,
-		Description:   description.String,
-		IsFeatured:    isFeatured,
-		BrandName:     brandName.String,
-		BrandVerified: brandVerified.Bool,
-		Images:        imgRes,
-		Variants:      varRes,
-	}, nil
-}
+	return res, nil
 
-
-func (server *Server) listFeaturedProducts(ctx *gin.Context) {
-	products, err := server.store.ListFeaturedProducts(ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	res := make([]productResponse, 0, len(products))
-	for _, p := range products {
-    built, err := server.buildProductResponse(ctx, p.ID, p.Name, p.Description, p.IsFeatured, p.BrandName, p.BrandVerified)
-    if err != nil {
-        ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
-    res = append(res, built)
-}
-
-	ctx.JSON(http.StatusOK, res)
 }

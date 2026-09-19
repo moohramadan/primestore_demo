@@ -23,3 +23,14 @@ SELECT * FROM product_images WHERE product_id = $1 ORDER BY sort_order;
 
 -- name: ListProductVariants :many
 SELECT * FROM product_variants WHERE product_id = $1 ORDER BY id;
+
+-- name: ListProductImagesByProductIDs :many
+SELECT * FROM product_images
+WHERE product_id = ANY(sqlc.arg(product_ids)::int[])
+ORDER BY product_id, sort_order;
+
+-- name: ListProductVariantsByProductIDs :many
+SELECT * FROM product_variants
+WHERE product_id = ANY(sqlc.arg(product_ids)::int[])
+ORDER BY product_id, id;
+

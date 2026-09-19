@@ -1,13 +1,16 @@
 package api
 
 import (
-	"net/http"
-    "database/sql"
-	"github.com/gin-gonic/gin"
-	db "primestore_demo_backend/db/sqlc"
+	"database/sql"
+	"errors"
 	"log"
+	"net/http"
+	db "primestore_demo_backend/db/sqlc"
 	"primestore_demo_backend/util"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 )
 
 type createUserRequest struct {
@@ -38,7 +41,6 @@ type sendOtpResponse struct {
 	OtpToken string `json:"otp_token"`
 }
 
-
 func (server *Server) createUser(ctx *gin.Context) {
 	var req createUserRequest
 
@@ -58,17 +60,21 @@ func (server *Server) createUser(ctx *gin.Context) {
 		return
 	}
 
-		arg := db.CreateUserParams{
+	arg := db.CreateUserParams{
 		Name:         req.Name,
 		Email:        req.Email,
 		PasswordHash: sql.NullString{String: hashedPassword, Valid: true},
 		Phone:        sql.NullString{String: req.Phone, Valid: req.Phone != ""},
 	}
 
-    
 	user, err := server.store.CreateUser(ctx, arg)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			ctx.JSON(http.StatusConflict, gin.H{"error": "an account with this email already exists"})
+			return
+		}
+		internalError(ctx, err, "could not create account")
 		return
 	}
 
@@ -81,6 +87,7 @@ func (server *Server) createUser(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, res)
 }
+
 type loginRequest struct {
 	Email    string `json:"email,omitempty" binding:"omitempty,email"`
 	Phone    string `json:"phone,omitempty"`
@@ -119,54 +126,54 @@ func (server *Server) login(ctx *gin.Context) {
 	}
 
 	if !user.PasswordHash.Valid {
-    ctx.JSON(http.StatusUnauthorized, gin.H{"error": "this account uses Google sign-in, not a password"})
-    return
-}
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "this account uses Google sign-in, not a password"})
+		return
+	}
 
-if err := util.CheckPassword(req.Password, user.PasswordHash.String); err != nil {
-    ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
-    return
-}
+	if err := util.CheckPassword(req.Password, user.PasswordHash.String); err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+		return
+	}
 
 	if !user.IsVerified {
-	ctx.JSON(http.StatusForbidden, gin.H{"error": "email not verified"})
-	return
-}
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "email not verified"})
+		return
+	}
 
 	accessToken, err := server.tokenMaker.CreateToken(int64(user.ID), 1*time.Hour)
-if err != nil {
-	ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	return
-}
+	if err != nil {
+		internalError(ctx, err, "something went wrong")
 
-refreshToken, err := util.GenerateRefreshToken()
-if err != nil {
-	ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	return
-}
+		return
+	}
 
-_, err = server.store.CreateRefreshToken(ctx, db.CreateRefreshTokenParams{
-	UserID:    user.ID,
-	Token:     refreshToken,
-	ExpiresAt: time.Now().Add(30 * 24 * time.Hour),
-})
-if err != nil {
-	ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	return
-}
+	refreshToken, err := util.GenerateRefreshToken()
+	if err != nil {
+		internalError(ctx, err, "something went wrong")
+		return
+	}
 
-rsp := loginResponse{
-	AccessToken:  accessToken,
-	RefreshToken: refreshToken,
-	User: userResponse{
-		ID:    int64(user.ID),
-		Name:  user.Name,
-		Email: user.Email,
-		Phone: user.Phone.String,
-	},
-}
-ctx.JSON(http.StatusOK, rsp)
+	_, err = server.store.CreateRefreshToken(ctx, db.CreateRefreshTokenParams{
+		UserID:    user.ID,
+		Token:     refreshToken,
+		ExpiresAt: time.Now().Add(30 * 24 * time.Hour),
+	})
+	if err != nil {
+		internalError(ctx, err, "something went wrong")
+		return
+	}
 
+	rsp := loginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		User: userResponse{
+			ID:    int64(user.ID),
+			Name:  user.Name,
+			Email: user.Email,
+			Phone: user.Phone.String,
+		},
+	}
+	ctx.JSON(http.StatusOK, rsp)
 
 }
 func (server *Server) sendOtp(ctx *gin.Context) {
@@ -184,26 +191,25 @@ func (server *Server) sendOtp(ctx *gin.Context) {
 
 	otp, err := util.GenerateOTP()
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		internalError(ctx, err, "something went wrong")
 		return
 	}
 
 	otpToken, err := server.tokenMaker.CreateOTPToken(int64(user.ID), otp, 10*time.Minute)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		internalError(ctx, err, "something went wrong")
 		return
 	}
 
 	if err := server.mailer.SendOTP(user.Email, otp); err != nil {
-	log.Println("mailer error:", err) // temporary debug line
-	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send email"})
-	return
-}
-	
-
+		log.Println("mailer error:", err) // temporary debug line
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send email"})
+		return
+	}
 
 	ctx.JSON(http.StatusOK, sendOtpResponse{OtpToken: otpToken})
 }
+
 type confirmOtpRequest struct {
 	OtpToken string `json:"otp_token" binding:"required"`
 	Otp      string `json:"otp" binding:"required"`
@@ -222,7 +228,7 @@ func (server *Server) confirmOtp(ctx *gin.Context) {
 		return
 	}
 
-	if claims.OTP != req.Otp {
+	if !server.tokenMaker.OTPMatches(claims, req.Otp) {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired code"})
 		return
 	}
@@ -234,6 +240,7 @@ func (server *Server) confirmOtp(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "email verified"})
 }
+
 type refreshRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
@@ -243,7 +250,6 @@ type refreshResponse struct {
 	RefreshToken string       `json:"refresh_token"`
 	User         userResponse `json:"user"`
 }
-
 
 func (server *Server) refresh(ctx *gin.Context) {
 	var req refreshRequest
@@ -309,6 +315,7 @@ func (server *Server) refresh(ctx *gin.Context) {
 		},
 	})
 }
+
 type logoutRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
@@ -327,6 +334,7 @@ func (server *Server) logout(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "logged out"})
 }
+
 type googleSignInRequest struct {
 	IDToken string `json:"id_token" binding:"required"`
 }
@@ -339,12 +347,11 @@ func (server *Server) googleSignIn(ctx *gin.Context) {
 	}
 
 	claims, err := util.VerifyGoogleIDToken(ctx, req.IDToken, server.googleClientID)
-if err != nil {
-    log.Printf("google token verification failed: %v", err)
-    ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid google token"})
-    return
-}
-
+	if err != nil {
+		log.Printf("google token verification failed: %v", err)
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid google token"})
+		return
+	}
 
 	if !claims.EmailVerified {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "google account email is not verified"})
@@ -443,5 +450,3 @@ func (server *Server) getMe(ctx *gin.Context) {
 		Phone: user.Phone.String,
 	})
 }
-
-

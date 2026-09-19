@@ -27,7 +27,9 @@ class _WishlistScreenState extends State<WishlistScreen> {
   Widget build(BuildContext context) {
     
     return Scaffold(
-      appBar: AppBar(title: const Text('Wishlist')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+      ),
       body: Obx(() {
         if (wishlist.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
