@@ -2,7 +2,7 @@ import 'package:demo_project/features/autentication/controllers/session__control
 import 'package:demo_project/features/autentication/controllers/user_controller.dart';
 import 'package:demo_project/features/autentication/screens/login/login%20screen.dart';
 import 'package:demo_project/features/shop/controllers/wishlist_controller.dart';
-import 'package:demo_project/features/shop/screens/navigation%20menu.dart';
+import 'package:demo_project/navigation/navigation%20menu.dart';
 
 
 

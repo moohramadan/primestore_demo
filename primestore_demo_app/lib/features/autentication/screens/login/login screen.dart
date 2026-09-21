@@ -10,7 +10,7 @@ import 'package:demo_project/features/autentication/screens/login/widgets/glass_
 import 'package:demo_project/features/autentication/screens/login/widgets/glass_social_buttons.dart';
 import 'package:demo_project/features/autentication/screens/login/widgets/glass_text_fied.dart';
 import 'package:demo_project/features/autentication/screens/signup.dart/signup%20screen.dart';
-import 'package:demo_project/features/shop/screens/navigation%20menu.dart';
+import 'package:demo_project/navigation/navigation%20menu.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/image_strings.dart';
 import 'package:demo_project/utils/constants/sizes.dart';

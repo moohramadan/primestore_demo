@@ -10,12 +10,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type addWishlistRequest struct {
+type wishlistAddRequest struct {
 	ProductID int64 `json:"product_id" binding:"required"`
 }
 
 func (server *Server) addToWishlist(ctx *gin.Context) {
-	var req addWishlistRequest
+	var req wishlistAddRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

@@ -4,7 +4,7 @@ import 'package:demo_project/data/repositories/auth_repository.dart';
 import 'package:demo_project/features/autentication/controllers/user_controller.dart';
 import 'package:demo_project/features/autentication/screens/login/widgets/glass_login_slider.dart';
 import 'package:demo_project/features/autentication/screens/otp/otp.dart';
-import 'package:demo_project/features/shop/screens/navigation%20menu.dart';
+import 'package:demo_project/navigation/navigation%20menu.dart';
 import 'package:demo_project/utils/local_storage/secure_storage_service.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';

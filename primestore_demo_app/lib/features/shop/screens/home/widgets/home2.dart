@@ -1,11 +1,9 @@
 import 'package:demo_project/common/widgets/glass_morphism/glass_morphism_container.dart';
 import 'package:demo_project/common/widgets/glass_morphism/search_container.dart';
-import 'package:demo_project/common/widgets/layouts/grid_layout.dart';
 import 'package:demo_project/common/widgets/texts/section_heading.dart';
 import 'package:demo_project/features/shop/screens/cart/cart.dart';
 import 'package:demo_project/features/shop/screens/home/widgets/carousel_slider.dart';
 import 'package:demo_project/features/shop/screens/home/widgets/category_item.dart';
-import 'package:demo_project/features/shop/screens/home/widgets/glass_vertical_card.dart';
 import 'package:demo_project/features/shop/screens/home/widgets/scaffold_style.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';

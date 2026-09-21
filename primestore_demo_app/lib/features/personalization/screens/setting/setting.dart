@@ -149,8 +149,8 @@ class SettingsScreen extends StatelessWidget {
                 // User Balance
                 TSettingBox(
                   icon: Iconsax.personalcard,
-                  text: 'User Balance',
-                  subText: 'View your account balance',
+                  text: 'Become a seller',
+                  subText: 'Start selling your own products',
                   showSubText: true,
                   onTap: () {},
                 ),

@@ -1,7 +1,6 @@
 
 import 'package:demo_project/common/widgets/appbar/appbar.dart';
 import 'package:demo_project/common/widgets/custom_shapes/curved_edges/curved_edges_widget.dart';
-import 'package:demo_project/common/widgets/icons/t_circular_icon.dart';
 import 'package:demo_project/common/widgets/icons/wislist_icon.dart';
 import 'package:demo_project/common/widgets/images/t_rounded_image.dart';
 import 'package:demo_project/features/shop/models/product_model.dart';

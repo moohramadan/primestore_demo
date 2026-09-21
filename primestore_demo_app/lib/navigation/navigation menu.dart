@@ -1,6 +1,6 @@
 import 'package:demo_project/features/personalization/screens/setting/setting.dart';
 import 'package:demo_project/features/shop/screens/home/home.dart';
-import 'package:demo_project/features/shop/screens/home/widgets/liquid%20glass%20nav%20bar.dart';
+import 'package:demo_project/navigation/widgets/liquid%20glass%20nav%20bar.dart';
 import 'package:demo_project/features/shop/screens/wishlist/wishlist.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:flutter/material.dart';
