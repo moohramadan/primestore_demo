@@ -4,43 +4,70 @@ import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:flutter/material.dart';
 
 class TRoundedElevatedButton extends StatelessWidget {
-  const TRoundedElevatedButton( {
-    super.key, required this.color,
-     required this.onpressed, 
-     required this.text,
-      this.icon = Icons.login_rounded,
-      this.ShowIcon = false,
+  const TRoundedElevatedButton({
+    super.key,
+    this.color = TColors.primary,
+    required this.onPressed,
+    required this.text,
+    this.icon,
+    this.width = double.infinity,
+    this.height,
+    this.textStyle,
+    this.padding,
+    this.borderRadius,
+    this.elevation,
   });
-   final Color color;
-   final VoidCallback onpressed;
-   final String text;
-   final bool ShowIcon;
-   final IconData icon;
-   
+
+  final Color color;
+  final VoidCallback? onPressed;
+  final String text;
+  final IconData? icon;
+  final double? width;
+  final double? height;
+  final TextStyle? textStyle;
+  final EdgeInsetsGeometry? padding;
+  final double? borderRadius;
+  final double? elevation;
+
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: onpressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          
-        ),
-        child:ShowIcon?  
-          SizedBox(
-            
-            width: double.infinity,
+    final buttonText = Text(
+      text,
+      style: textStyle ??
+          Theme.of(context).textTheme.headlineSmall!.apply(
+            color: TColors.white,
+            fontWeightDelta: 28,
+          ),
+    );
+
+    final buttonChild = icon == null
+        ? buttonText
+        : SizedBox(
+            width: width ?? double.infinity,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-            Icon(icon, size: TSizes.lg,),
-            Padding(
-              padding: const EdgeInsets.only(left: 10.0),
-              child: Text(text, style: Theme.of(context).textTheme.headlineSmall!.apply(color: TColors.white, fontWeightDelta: 28),),
+              children: [
+                Icon(icon, size: TSizes.lg),
+                const SizedBox(width: 10),
+                buttonText,
+              ],
             ),
-                    ],),
-          ):Text(text),
+          );
+
+    return SizedBox(
+      width: width,
+      height: height,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          padding: padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius ?? 16),
+          ),
+          elevation: elevation,
+        ),
+        child: buttonChild,
       ),
     );
   }

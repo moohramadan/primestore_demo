@@ -9,6 +9,21 @@ import (
 	"time"
 )
 
+type Address struct {
+	ID           int64          `json:"id"`
+	UserID       int64          `json:"user_id"`
+	FullName     string         `json:"full_name"`
+	Phone        string         `json:"phone"`
+	AddressLine1 string         `json:"address_line_1"`
+	AddressLine2 sql.NullString `json:"address_line_2"`
+	City         string         `json:"city"`
+	State        string         `json:"state"`
+	PostalCode   string         `json:"postal_code"`
+	Country      string         `json:"country"`
+	IsDefault    bool           `json:"is_default"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+}
+
 type Brand struct {
 	ID         int32          `json:"id"`
 	Name       string         `json:"name"`

@@ -46,7 +46,7 @@ class AuthController {
       }),
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
       final data = jsonDecode(response.body);
       return UserModel.fromJson(data);
     } else {

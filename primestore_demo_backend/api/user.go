@@ -85,7 +85,7 @@ func (server *Server) createUser(ctx *gin.Context) {
 		Phone: user.Phone.String,
 	}
 
-	ctx.JSON(http.StatusOK, res)
+	ctx.JSON(http.StatusCreated, res)
 }
 
 type loginRequest struct {

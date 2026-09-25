@@ -1,5 +1,6 @@
 
 
+import 'package:demo_project/common/widgets/boxes/search_box.dart';
 import 'package:demo_project/common/widgets/effects/shimmer_effect.dart';
 import 'package:demo_project/common/widgets/glass_morphism/glass_morphism_container.dart';
 import 'package:demo_project/common/widgets/glass_morphism/search_container.dart';
@@ -79,12 +80,12 @@ class HomeScreen extends StatelessWidget {
           ),
 
            SizedBox(height: TSizes.spaceBtwItems,),
-           TGlassSearchContainer(),
+           TSearchBox(),
            SizedBox(height: TSizes.spaceBtwItems,),
            TCarouselSlider(),
           SizedBox(height: TSizes.spaceBtwItems,),
           TCategoryBuilder(),
-          SizedBox(height: TSizes.spaceBtwItems,),
+          SizedBox(height: TSizes.sm,),
 
          TSectionHeading( title: 'Featured Products', textButtonColor: TColors.primary,),
          SizedBox(height: TSizes.spaceBtwItems,),
@@ -92,7 +93,7 @@ class HomeScreen extends StatelessWidget {
          Obx(() {
   if (controller.isLoading.value) {
     return TGridLayout(
-      itemCount: 8, // placeholder count while real data loads
+      itemCount: controller.featuredProducts.length, // placeholder count while real data loads
       itemBuilder: (_, index) => const TShimmerEffect(
         width: double.infinity,
         height: 180, // match your real card's height

@@ -39,6 +39,8 @@ func NewServer(store db.Queries, tokenMaker *util.TokenMaker, mailer *util.Maile
 	authRoutes.GET("/users/me", server.getMe)
 	router.GET("/categories", server.listCategories)
 	router.GET("/products/featured", server.listFeaturedProducts)
+	authRoutes.POST("/addresses", server.createAddress)
+	authRoutes.GET("/addresses", server.listAddresses)
 	authRoutes.POST("/wishlist", server.addToWishlist)
 	authRoutes.DELETE("/wishlist/:product_id", server.removeFromWishlist)
 	authRoutes.GET("/wishlist", server.listWishlist)

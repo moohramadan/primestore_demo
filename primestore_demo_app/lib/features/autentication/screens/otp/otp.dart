@@ -67,11 +67,11 @@ class OtpScreen extends StatelessWidget {
                 SizedBox(height: TSizes.spaceBtwItems * 2),
                 Obx(() => TRoundedElevatedButton(
       color: TColors.primary,
-      onpressed: controller.isLoading.value
+      onPressed: controller.isLoading.value
           ? () {}
           : () => controller.verify(controller.pinController.text),
       text: 'Verify & continue',
-      ShowIcon: true,
+      
       icon: Icons.check_box,
     )),
 

@@ -107,4 +107,5 @@ static const String sendEmailImageLight =
 
 static const String sendEmailImageDark =
     "assets/icons/IMG_0947.jpg";
+
 }

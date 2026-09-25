@@ -7,6 +7,8 @@ import 'package:demo_project/features/personalization/screens/address/adress.dar
 import 'package:demo_project/features/personalization/screens/setting/widgets/profile_box.dart';
 import 'package:demo_project/features/personalization/screens/setting/widgets/setting_box.dart';
 import 'package:demo_project/features/personalization/screens/user_profile/personal%20info%20screen.dart';
+import 'package:demo_project/navigation/seller_nav.dart';
+import 'package:demo_project/seller_features/shop/screens/seller_home/seller_home.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 
 
@@ -71,7 +73,7 @@ class SettingsScreen extends StatelessWidget {
                   text: 'My Addresses',
                   subText: 'Set shopping delivery address',
                   showSubText: true,
-                  onTap: () => Get.to(() => AdressScreen()),
+                  onTap: () => Get.to(() => AddressScreen()),
                 ),
                
                  const SizedBox(height: TSizes.spaceBtwItems),
@@ -152,7 +154,7 @@ class SettingsScreen extends StatelessWidget {
                   text: 'Become a seller',
                   subText: 'Start selling your own products',
                   showSubText: true,
-                  onTap: () {},
+                  onTap: () => Get.to(() => SellerNavigationMenu()),
                 ),
                   ]
                 ),
@@ -165,9 +167,9 @@ class SettingsScreen extends StatelessWidget {
               TRoundedElevatedButton(
   color: TColors.primary, // or whatever your "destructive action" color is
   text: 'Log out',
-  ShowIcon: true,
+  
   icon: Icons.logout, 
-  onpressed:  () => Get.find<LogoutController>().handleLogout(),
+  onPressed:  () => Get.find<LogoutController>().handleLogout(),
 
 ),
 
