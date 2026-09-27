@@ -5,6 +5,7 @@ import 'package:demo_project/common/widgets/list_title/product_tile.dart';
 import 'package:demo_project/common/widgets/texts/section_heading.dart';
 import 'package:demo_project/seller_features/shop/screens/add_product/add_product.dart';
 import 'package:demo_project/seller_features/shop/screens/seller_catalogue/widgets/categories_row.dart';
+import 'package:demo_project/seller_features/shop/screens/seller_product_details/seller_product_detai;s.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/helpers/helper_functions.dart';
@@ -57,12 +58,16 @@ class SellerCatalogueScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 2),
                 child: Column(
                   children: [
-                    TProductTile(
-                      title: 'Classic Leather Chair',
-                      subtitle: 'Furniture',
-                      price: '149.00',
-                      icon: Iconsax.lamp_on,
-                      status: TIndicatorStatus.active,
+                    GestureDetector
+                    (
+                      onTap: () => Get.to(() => SellerProductDetail()),
+                      child: TProductTile(
+                        title: 'Classic Leather Chair',
+                        subtitle: 'Furniture',
+                        price: '149.00',
+                        icon: Iconsax.lamp_on,
+                        status: TIndicatorStatus.active,
+                      ),
                     ),
                     TProductTile(
                       title: 'Minimal Desk Lamp',

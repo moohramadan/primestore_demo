@@ -1,6 +1,7 @@
 import 'package:demo_project/features/personalization/screens/user_profile/widgets/edit_email.dart';
 import 'package:demo_project/features/personalization/screens/user_profile/widgets/edit_name.dart';
 import 'package:demo_project/features/personalization/controllers/profile_controller.dart';
+import 'package:demo_project/common/widgets/effects/shimmer_effect.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/helpers/helper_functions.dart';
 import 'package:flutter/material.dart';
@@ -29,7 +30,7 @@ class PersonalInfoScreen extends StatelessWidget {
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const _ProfileLoadingSkeleton();
                 }
 
                 final user = controller.user.value;
@@ -79,6 +80,43 @@ class PersonalInfoScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ProfileLoadingSkeleton extends StatelessWidget {
+  const _ProfileLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      children: [
+        const SizedBox(height: 24),
+        const TShimmerEffect(width: 190, height: 38, radius: 8),
+        const SizedBox(height: 24),
+        Center(
+          child: ClipOval(
+            child: const TShimmerEffect(width: 88, height: 88, radius: 44),
+          ),
+        ),
+        const SizedBox(height: 24),
+        for (var index = 0; index < 4; index++) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const TShimmerEffect(width: 110, height: 18, radius: 5),
+                const SizedBox(height: 8),
+                const TShimmerEffect(width: 190, height: 16, radius: 5),
+              ],
+            ),
+          ),
+          if (index < 3)
+            const Divider(height: 1, thickness: 1, color: Color(0xFFF2F2F2)),
+        ],
+      ],
     );
   }
 }

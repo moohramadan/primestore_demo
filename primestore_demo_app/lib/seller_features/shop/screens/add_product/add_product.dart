@@ -19,47 +19,50 @@ class AddProductScreen extends StatelessWidget {
         titleSpacing: TSizes.md * 6,
         title: Text('Add product'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(TSizes.defaultSpace),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                TSectionHeading(title: 'Photos', showActionButton: false,),
-                Text('1 of 6',style:  Theme.of(context).textTheme.titleLarge),
-              ],
-            ),
-            SizedBox(height : TSizes.spaceBtwInputFields),
-            Row(
-              children: [
-                TRoundedContainer(
-                  height: 100,
-                  width: 100,
-                  backgroundColor:dark? TColors.darkerGrey : TColors.grey,
-                  child: Icon(Iconsax.gallery, size: TSizes.xl + 5,),
-                  ),
-                  SizedBox(width : TSizes.spaceBtwInputFields),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(TSizes.defaultSpace),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TSectionHeading(title: 'Photos', showActionButton: false,),
+                  Text('1 of 6',style:  Theme.of(context).textTheme.titleLarge),
+                ],
+              ),
+              SizedBox(height : TSizes.spaceBtwInputFields),
+              Row(
+                children: [
                   TRoundedContainer(
-                  height: 100,
-                  width: 100,
-                  backgroundColor:dark? TColors.darkerGrey : TColors.grey,
-                  child: Icon(Iconsax.add, size: TSizes.xl + 5,),
-                  ),
-                  SizedBox(width : TSizes.spaceBtwInputFields),
-                  TRoundedContainer(
-                  height: 100,
-                  width: 100,
-                  backgroundColor:dark? TColors.darkerGrey : TColors.grey,
-                  child: Icon(Iconsax.add, size: TSizes.xl + 5,),
-                  )
-              ],
-            ),
-            SizedBox(height : TSizes.spaceBtwInputFields),
-            TSectionHeading(title: "Product Info", showActionButton: false, ),
-            SizedBox(height : TSizes.spaceBtwInputFields),
-            ProductInfoContainer()
-          ],
+                    height: 100,
+                    width: 100,
+                    backgroundColor:dark? TColors.darkerGrey : TColors.grey,
+                    child: Icon(Iconsax.gallery, size: TSizes.xl + 5,),
+                    ),
+                    SizedBox(width : TSizes.spaceBtwInputFields),
+                    TRoundedContainer(
+                    height: 100,
+                    width: 100,
+                    backgroundColor:dark? TColors.darkerGrey : TColors.grey,
+                    child: Icon(Iconsax.add, size: TSizes.xl + 5,),
+                    ),
+                    SizedBox(width : TSizes.spaceBtwInputFields),
+                    TRoundedContainer(
+                    height: 100,
+                    width: 100,
+                    backgroundColor:dark? TColors.darkerGrey : TColors.grey,
+                    child: Icon(Iconsax.add, size: TSizes.xl + 5,),
+                    )
+                ],
+              ),
+              SizedBox(height : TSizes.spaceBtwInputFields),
+              TSectionHeading(title: "Product Info", showActionButton: false, ),
+              SizedBox(height : TSizes.spaceBtwInputFields),
+              ProductInfoContainer()
+            ],
+          ),
         ),
       ),
     );
