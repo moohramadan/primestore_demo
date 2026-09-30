@@ -8,20 +8,79 @@ package sqlc
 import (
 	"context"
 	"database/sql"
+	"time"
 )
+
+const createGoogleUser = `-- name: CreateGoogleUser :one
+INSERT INTO users (
+  name, email, google_id, is_verified
+) VALUES (
+  $1, $2, $3, true
+) RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller
+`
+
+type CreateGoogleUserParams struct {
+	Name     string         `json:"name"`
+	Email    string         `json:"email"`
+	GoogleID sql.NullString `json:"google_id"`
+}
+
+func (q *Queries) CreateGoogleUser(ctx context.Context, arg CreateGoogleUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, createGoogleUser, arg.Name, arg.Email, arg.GoogleID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Phone,
+		&i.CreatedAt,
+		&i.IsVerified,
+		&i.GoogleID,
+		&i.IsSeller,
+	)
+	return i, err
+}
+
+const createRefreshToken = `-- name: CreateRefreshToken :one
+INSERT INTO refresh_tokens (
+  user_id, token, expires_at
+) VALUES (
+  $1, $2, $3
+) RETURNING id, user_id, token, expires_at, created_at
+`
+
+type CreateRefreshTokenParams struct {
+	UserID    int32     `json:"user_id"`
+	Token     string    `json:"token"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
+func (q *Queries) CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) (RefreshToken, error) {
+	row := q.db.QueryRowContext(ctx, createRefreshToken, arg.UserID, arg.Token, arg.ExpiresAt)
+	var i RefreshToken
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Token,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
   name, email, password_hash, phone
 ) VALUES (
   $1, $2, $3, $4
-) RETURNING id, name, email, password_hash, phone, created_at
+) RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller
 `
 
 type CreateUserParams struct {
 	Name         string         `json:"name"`
 	Email        string         `json:"email"`
-	PasswordHash string         `json:"password_hash"`
+	PasswordHash sql.NullString `json:"password_hash"`
 	Phone        sql.NullString `json:"phone"`
 }
 
@@ -40,8 +99,31 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.PasswordHash,
 		&i.Phone,
 		&i.CreatedAt,
+		&i.IsVerified,
+		&i.GoogleID,
+		&i.IsSeller,
 	)
 	return i, err
+}
+
+const deleteAllUserRefreshTokens = `-- name: DeleteAllUserRefreshTokens :exec
+DELETE FROM refresh_tokens
+WHERE user_id = $1
+`
+
+func (q *Queries) DeleteAllUserRefreshTokens(ctx context.Context, userID int32) error {
+	_, err := q.db.ExecContext(ctx, deleteAllUserRefreshTokens, userID)
+	return err
+}
+
+const deleteRefreshToken = `-- name: DeleteRefreshToken :exec
+DELETE FROM refresh_tokens
+WHERE token = $1
+`
+
+func (q *Queries) DeleteRefreshToken(ctx context.Context, token string) error {
+	_, err := q.db.ExecContext(ctx, deleteRefreshToken, token)
+	return err
 }
 
 const deleteUser = `-- name: DeleteUser :exec
@@ -54,8 +136,26 @@ func (q *Queries) DeleteUser(ctx context.Context, id int32) error {
 	return err
 }
 
+const getRefreshToken = `-- name: GetRefreshToken :one
+SELECT id, user_id, token, expires_at, created_at FROM refresh_tokens
+WHERE token = $1 LIMIT 1
+`
+
+func (q *Queries) GetRefreshToken(ctx context.Context, token string) (RefreshToken, error) {
+	row := q.db.QueryRowContext(ctx, getRefreshToken, token)
+	var i RefreshToken
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Token,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getUser = `-- name: GetUser :one
-SELECT id, name, email, password_hash, phone, created_at FROM users
+SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -69,12 +169,15 @@ func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 		&i.PasswordHash,
 		&i.Phone,
 		&i.CreatedAt,
+		&i.IsVerified,
+		&i.GoogleID,
+		&i.IsSeller,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, email, password_hash, phone, created_at FROM users
+SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -88,12 +191,37 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.PasswordHash,
 		&i.Phone,
 		&i.CreatedAt,
+		&i.IsVerified,
+		&i.GoogleID,
+		&i.IsSeller,
+	)
+	return i, err
+}
+
+const getUserByGoogleID = `-- name: GetUserByGoogleID :one
+SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller FROM users
+WHERE google_id = $1 LIMIT 1
+`
+
+func (q *Queries) GetUserByGoogleID(ctx context.Context, googleID sql.NullString) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByGoogleID, googleID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Phone,
+		&i.CreatedAt,
+		&i.IsVerified,
+		&i.GoogleID,
+		&i.IsSeller,
 	)
 	return i, err
 }
 
 const getUserByPhone = `-- name: GetUserByPhone :one
-SELECT id, name, email, password_hash, phone, created_at FROM users
+SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller FROM users
 WHERE phone = $1 LIMIT 1
 `
 
@@ -107,12 +235,44 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phone sql.NullString) (Use
 		&i.PasswordHash,
 		&i.Phone,
 		&i.CreatedAt,
+		&i.IsVerified,
+		&i.GoogleID,
+		&i.IsSeller,
+	)
+	return i, err
+}
+
+const linkGoogleAccount = `-- name: LinkGoogleAccount :one
+UPDATE users
+SET google_id = $2, is_verified = true
+WHERE id = $1
+RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller
+`
+
+type LinkGoogleAccountParams struct {
+	ID       int32          `json:"id"`
+	GoogleID sql.NullString `json:"google_id"`
+}
+
+func (q *Queries) LinkGoogleAccount(ctx context.Context, arg LinkGoogleAccountParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, linkGoogleAccount, arg.ID, arg.GoogleID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Phone,
+		&i.CreatedAt,
+		&i.IsVerified,
+		&i.GoogleID,
+		&i.IsSeller,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, name, email, password_hash, phone, created_at FROM users
+SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller FROM users
 ORDER BY id
 LIMIT $1
 OFFSET $2
@@ -139,6 +299,9 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.PasswordHash,
 			&i.Phone,
 			&i.CreatedAt,
+			&i.IsVerified,
+			&i.GoogleID,
+			&i.IsSeller,
 		); err != nil {
 			return nil, err
 		}
@@ -153,11 +316,69 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 	return items, nil
 }
 
+const updateUserEmail = `-- name: UpdateUserEmail :one
+UPDATE users
+SET email = $2
+WHERE id = $1
+RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller
+`
+
+type UpdateUserEmailParams struct {
+	ID    int32  `json:"id"`
+	Email string `json:"email"`
+}
+
+func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUserEmail, arg.ID, arg.Email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Phone,
+		&i.CreatedAt,
+		&i.IsVerified,
+		&i.GoogleID,
+		&i.IsSeller,
+	)
+	return i, err
+}
+
+const updateUserName = `-- name: UpdateUserName :one
+UPDATE users
+SET name = $2
+WHERE id = $1
+RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller
+`
+
+type UpdateUserNameParams struct {
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
+}
+
+func (q *Queries) UpdateUserName(ctx context.Context, arg UpdateUserNameParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUserName, arg.ID, arg.Name)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Phone,
+		&i.CreatedAt,
+		&i.IsVerified,
+		&i.GoogleID,
+		&i.IsSeller,
+	)
+	return i, err
+}
+
 const updateUserPhone = `-- name: UpdateUserPhone :one
 UPDATE users
 SET phone = $2
 WHERE id = $1
-RETURNING id, name, email, password_hash, phone, created_at
+RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller
 `
 
 type UpdateUserPhoneParams struct {
@@ -175,6 +396,20 @@ func (q *Queries) UpdateUserPhone(ctx context.Context, arg UpdateUserPhoneParams
 		&i.PasswordHash,
 		&i.Phone,
 		&i.CreatedAt,
+		&i.IsVerified,
+		&i.GoogleID,
+		&i.IsSeller,
 	)
 	return i, err
+}
+
+const verifyUserEmail = `-- name: VerifyUserEmail :exec
+UPDATE users
+SET is_verified = true
+WHERE id = $1
+`
+
+func (q *Queries) VerifyUserEmail(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, verifyUserEmail, id)
+	return err
 }

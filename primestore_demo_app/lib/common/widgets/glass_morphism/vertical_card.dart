@@ -33,8 +33,24 @@ class TVerticalGlassCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(width: 150, child: Flexible(child: Text('Nike Shoes', overflow: TextOverflow.ellipsis, maxLines: 1, style: Theme.of(context).textTheme.headlineSmall, ))),
-              SizedBox(width: 150, child: Flexible(child: Text("Men's wear", overflow: TextOverflow.ellipsis, maxLines: 1, style: Theme.of(context).textTheme.bodySmall, ))),
+              SizedBox(
+                width: 150,
+                child: Text(
+                  'Nike Shoes',
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+              ),
+              SizedBox(
+                width: 150,
+                child: Text(
+                  "Men's wear",
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
               Row(
       
       children: [

@@ -43,17 +43,17 @@ class ForgetPasswordScreen extends StatelessWidget {
           SizedBox(height: TSizes.spaceBtwSections,),
           Obx(() {
           if (controller.isEmail.value) {
-          return TTextfiedRounded(labeltext: "Email", hinttext: "example@domain", icon: Icons.mail);
+          return TTextFieldRounded(labelText: "Email", hintText: "example@domain", icon: Icons.mail);
           } else {
-           return TTextfiedRounded(
-          labeltext: 'Phone',
-         hinttext: '234 8012345678',
+           return TTextFieldRounded(
+          labelText: 'Phone',
+         hintText: '234 8012345678',
          icon: Icons.phone,
          );
           }
           }),
           SizedBox(height: TSizes.spaceBtwSections,),
-          TRoundedElevatedButton(color: TColors.primary, onpressed: () => Get.to(()=> OtpScreen()), text: 'Next', ShowIcon: true,),
+          TRoundedElevatedButton(color: TColors.primary, onPressed: () => Get.to(()=> OtpScreen()), text: 'Next', ),
           SizedBox(height: TSizes.spaceBtwSections * 2,),
             Text(
                '© 2026 Prime Store • All rights reserved',

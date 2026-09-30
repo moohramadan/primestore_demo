@@ -6,31 +6,90 @@ package sqlc
 
 import (
 	"database/sql"
+	"time"
 )
 
+type Address struct {
+	ID           int64          `json:"id"`
+	UserID       int64          `json:"user_id"`
+	FullName     string         `json:"full_name"`
+	Phone        string         `json:"phone"`
+	AddressLine1 string         `json:"address_line_1"`
+	AddressLine2 sql.NullString `json:"address_line_2"`
+	City         string         `json:"city"`
+	State        string         `json:"state"`
+	PostalCode   string         `json:"postal_code"`
+	Country      string         `json:"country"`
+	IsDefault    bool           `json:"is_default"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+}
+
+type Brand struct {
+	ID         int32          `json:"id"`
+	Name       string         `json:"name"`
+	LogoUrl    sql.NullString `json:"logo_url"`
+	IsVerified bool           `json:"is_verified"`
+	CreatedAt  sql.NullTime   `json:"created_at"`
+}
+
 type Category struct {
-	ID        int32        `json:"id"`
-	Name      string       `json:"name"`
-	CreatedAt sql.NullTime `json:"created_at"`
+	ID        int32          `json:"id"`
+	Name      string         `json:"name"`
+	CreatedAt sql.NullTime   `json:"created_at"`
+	Icon      sql.NullString `json:"icon"`
 }
 
 type Product struct {
 	ID          int32          `json:"id"`
-	SellerID    int32          `json:"seller_id"`
+	SellerID    sql.NullInt32  `json:"seller_id"`
 	CategoryID  sql.NullInt32  `json:"category_id"`
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
-	Price       string         `json:"price"`
-	StockQty    int32          `json:"stock_qty"`
-	ImageUrl    sql.NullString `json:"image_url"`
 	CreatedAt   sql.NullTime   `json:"created_at"`
+	BrandID     sql.NullInt32  `json:"brand_id"`
+	IsFeatured  bool           `json:"is_featured"`
+}
+
+type ProductImage struct {
+	ID        int32  `json:"id"`
+	ProductID int32  `json:"product_id"`
+	ImageUrl  string `json:"image_url"`
+	SortOrder int32  `json:"sort_order"`
+}
+
+type ProductVariant struct {
+	ID              int32          `json:"id"`
+	ProductID       int32          `json:"product_id"`
+	Color           sql.NullString `json:"color"`
+	Size            sql.NullString `json:"size"`
+	Price           string         `json:"price"`
+	DiscountPercent int32          `json:"discount_percent"`
+	Stock           int32          `json:"stock"`
+}
+
+type RefreshToken struct {
+	ID        int32        `json:"id"`
+	UserID    int32        `json:"user_id"`
+	Token     string       `json:"token"`
+	ExpiresAt time.Time    `json:"expires_at"`
+	CreatedAt sql.NullTime `json:"created_at"`
 }
 
 type User struct {
 	ID           int32          `json:"id"`
 	Name         string         `json:"name"`
 	Email        string         `json:"email"`
-	PasswordHash string         `json:"password_hash"`
+	PasswordHash sql.NullString `json:"password_hash"`
 	Phone        sql.NullString `json:"phone"`
 	CreatedAt    sql.NullTime   `json:"created_at"`
+	IsVerified   bool           `json:"is_verified"`
+	GoogleID     sql.NullString `json:"google_id"`
+	IsSeller     bool           `json:"is_seller"`
+}
+
+type Wishlist struct {
+	ID        int64     `json:"id"`
+	UserID    int64     `json:"user_id"`
+	ProductID int64     `json:"product_id"`
+	CreatedAt time.Time `json:"created_at"`
 }

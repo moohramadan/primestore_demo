@@ -1,49 +1,137 @@
-
-
-import 'package:demo_project/common/widgets/glass_morphism/glass_morphism_container.dart';
-import 'package:demo_project/common/widgets/glass_morphism/vertical_card.dart';
-import 'package:demo_project/utils/constants/colors.dart';
-import 'package:demo_project/utils/constants/sizes.dart';
-import 'package:demo_project/utils/helpers/helper_functions.dart';
+import 'package:demo_project/common/widgets/icons/wislist_icon.dart';
+import 'package:demo_project/common/widgets/effects/shimmer_effect.dart';
+import 'package:demo_project/features/shop/controllers/wishlist_controller.dart';
+import 'package:demo_project/features/shop/screens/product_details/product_detail.dart';
 import 'package:flutter/material.dart';
-import 'package:iconsax/iconsax.dart';
+import 'package:get/get.dart';
 
-class WishlistScreen extends StatelessWidget {
+// import your existing product-tap navigation target here
+
+class WishlistScreen extends StatefulWidget {
   const WishlistScreen({super.key});
 
   @override
+  State<WishlistScreen> createState() => _WishlistScreenState();
+}
+
+class _WishlistScreenState extends State<WishlistScreen> {
+  final wishlist = Get.find<WishlistController>();
+
+  @override
+  void initState() {
+    super.initState();
+    wishlist.loadWishlistItems();
+  }
+
+  @override
   Widget build(BuildContext context) {
-   final dark = THelperFunctions.isDarkMode(context);
+    
     return Scaffold(
       appBar: AppBar(
-        title: Text('Wishlist', style: Theme.of(context).textTheme.headlineMedium,),
-        titleSpacing: 90,
-        leading: Padding(
-          padding: const EdgeInsets.all(5),
-          child: TGlassMorphism(
-            padding: EdgeInsets.all(0),
-            child: Icon(Iconsax.arrow_left, color: dark? TColors.white : TColors.black,),
+        automaticallyImplyLeading: false,
+      ),
+      body: Obx(() {
+        if (wishlist.isLoading.value) {
+          return GridView.builder(
+            padding: const EdgeInsets.all(12),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 0.75,
             ),
-        ),
-        actions: [
-           TGlassMorphism(
-             padding: EdgeInsets.all(9),
-             child: Icon(Iconsax.shopping_bag),
-             ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: TSizes.sm, vertical: TSizes.defaultSpace),
-        child: Column(
+            itemCount: 6,
+            itemBuilder: (context, index) => const Card(
+              child: Padding(
+                padding: EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TShimmerEffect(
+                      width: double.infinity,
+                      height: 130,
+                      radius: 8,
+                    ),
+                    SizedBox(height: 10),
+                    TShimmerEffect(width: double.infinity, height: 14, radius: 4),
+                    SizedBox(height: 8),
+                    TShimmerEffect(width: 72, height: 14, radius: 4),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
+        if (wishlist.wishlistItems.isEmpty) {
+          return const Center(child: Text('Nothing in your wishlist yet.'));
+        }
+
+        return GestureDetector(
           
-          children: [
-            TVerticalGlassCard(dark: dark),
-            SizedBox(height: TSizes.spaceBtwItems,),
-            TVerticalGlassCard(dark: dark),
-          ],
-        ),
-      ),
+          child: GridView.builder(
+            padding: const EdgeInsets.all(12),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 0.75,
+            ),
+            itemCount: wishlist.wishlistItems.length,
+            itemBuilder: (context, index) {
+              final product = wishlist.wishlistItems[index];
+              return GestureDetector(
+                onTap: () => Get.to(() => ProductDetail(product: product)),
+                child: Stack(
+                  children: [
+                    // Swap this for your existing product card widget so
+                    // styling matches Home/Category/Search exactly:
+                    // ProductCard(product: product),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                            child: product.mainImageUrl != null && product.mainImageUrl!.startsWith('http')
+                  ? Image.network(
+                            product.mainImageUrl!,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          )
+                  : Image.asset(
+                            product.mainImageUrl ?? 'assets/images/product_placeholder.png',
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          ),
+                          ),
+                          
+                          
+                          
+                            const SizedBox(height: 4),
+                            Text(
+                              product.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text('\$${product.defaultVariant?.price.toStringAsFixed(2) ?? '-'}'),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: WishlistIconButton(product: product),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      }),
     );
   }
 }
-

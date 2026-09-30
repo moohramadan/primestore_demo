@@ -26,6 +26,8 @@ go.work.sum
 
 # env file
 .env
+gmailcred.env
+
 
 # Editor/IDE
 # .idea/

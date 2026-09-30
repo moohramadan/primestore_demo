@@ -1,29 +1,60 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
 	db "primestore_demo_backend/db/sqlc"
+	"primestore_demo_backend/util"
+	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
-// Server serves HTTP requests for our banking service.
 type Server struct {
-	store  db.Queries
-	router *gin.Engine
+	store          db.Queries
+	tokenMaker     *util.TokenMaker
+	mailer         *util.Mailer
+	googleClientID string
+	router         *gin.Engine
 }
 
-// NewServer creates a new HTTP server and sets up routing.
-func NewServer(store db.Queries) *Server {
-	server := &Server{store: store}
+func NewServer(store db.Queries, tokenMaker *util.TokenMaker, mailer *util.Mailer, googleClientID string) *Server {
+	server := &Server{
+		store:          store,
+		tokenMaker:     tokenMaker,
+		mailer:         mailer,
+		googleClientID: googleClientID,
+	}
 	router := gin.Default()
 
 	router.POST("/users", server.createUser)
-	router.POST("/login", server.login)
+	loginLimiter := NewRateLimiter(10, 15*time.Minute)
+	router.POST("/users/login", rateLimitMiddleware(loginLimiter), server.login)
+	router.POST("/users/google-signin", server.googleSignIn)
+	verifyEmailLimiter := NewRateLimiter(3, 10*time.Minute)
+	router.POST("/users/verify-email/send", rateLimitMiddleware(verifyEmailLimiter), server.sendOtp)
+	otpConfirmLimiter := NewRateLimiter(5, 10*time.Minute)
+	router.POST("/users/verify-email/confirm", rateLimitMiddleware(otpConfirmLimiter), server.confirmOtp)
+	router.POST("/users/refresh", server.refresh)
+	router.POST("/users/logout", server.logout)
+	authRoutes := router.Group("/").Use(authMiddleware(server))
+	authRoutes.GET("/users/me", server.getMe)
+	emailChangeRequestLimiter := NewRateLimiter(3, 10*time.Minute)
+	authRoutes.POST("/users/me/email/request", rateLimitMiddleware(emailChangeRequestLimiter), server.requestEmailChange)
+	emailChangeConfirmLimiter := NewRateLimiter(5, 10*time.Minute)
+	authRoutes.POST("/users/me/email/confirm", rateLimitMiddleware(emailChangeConfirmLimiter), server.confirmEmailChange)
+	router.GET("/categories", server.listCategories)
+	router.GET("/products/featured", server.listFeaturedProducts)
+	addressLimiter := NewRateLimiter(5, 15*time.Minute)
+	authRoutes.POST("/addresses", rateLimitMiddleware(addressLimiter), server.createAddress)
+	authRoutes.GET("/addresses", server.listAddresses)
+	authRoutes.POST("/wishlist", server.addToWishlist)
+	authRoutes.DELETE("/wishlist/:product_id", server.removeFromWishlist)
+	authRoutes.GET("/wishlist", server.listWishlist)
+	authRoutes.GET("/wishlist/ids", server.listWishlistedIDs)
 
 	server.router = router
 	return server
 }
 
-// Start runs the HTTP server on the given address
 func (server *Server) Start(address string) error {
 	return server.router.Run(address)
 }

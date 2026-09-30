@@ -31,7 +31,7 @@ class TProfileHeader extends StatelessWidget {
       padding: const EdgeInsets.all(TSizes.md),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(25),
-        
+        color: TColors.primary.withValues(alpha: 0.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,21 +73,24 @@ class TProfileHeader extends StatelessWidget {
           // Edit Profile button — a slimmer glass pill instead of the
           // reference's solid button, so it reads as "inside" the card
           // rather than a separate block.
-          SizedBox(
-            width: double.infinity,
-            child: TGlassMorphism(
-              padding: const EdgeInsets.symmetric(vertical: TSizes.sm),
-              borderRadius: TSizes.lg,
-              child: InkWell(
-                onTap: onEditProfile,
-                borderRadius: BorderRadius.circular(TSizes.cardRadiusLg),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(Iconsax.edit_2, size: 16, color: TColors.primary),
-                    SizedBox(width: TSizes.sm),
-                    Text('Edit Profile'),
-                  ],
+          GestureDetector(
+            onTap : onEditProfile,
+            child: SizedBox(
+              width: double.infinity,
+              child: TGlassMorphism(
+                padding: const EdgeInsets.symmetric(vertical: TSizes.sm),
+                borderRadius: TSizes.lg,
+                child: InkWell(
+                  onTap: onEditProfile,
+                  borderRadius: BorderRadius.circular(TSizes.cardRadiusLg),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Iconsax.edit_2, size: 16, color: TColors.primary),
+                      SizedBox(width: TSizes.sm),
+                      Text('Edit Profile'),
+                    ],
+                  ),
                 ),
               ),
             ),
