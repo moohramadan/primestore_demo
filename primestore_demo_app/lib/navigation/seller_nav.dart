@@ -1,12 +1,10 @@
-import 'package:demo_project/navigation/navigation%20menu.dart';
+import 'package:demo_project/seller_features/personalization/screens/seller_setting/seller_setting.dart';
 import 'package:demo_project/seller_features/shop/screens/seller_catalogue/seller_catalogue.dart';
 import 'package:demo_project/seller_features/shop/screens/seller_home/seller_home.dart';
 import 'package:demo_project/seller_features/shop/screens/seller_orders/seller_orders.dart';
-import 'package:demo_project/seller_features/shop/screens/text.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
-
 
 class SellerNavigationMenu extends StatefulWidget {
   const SellerNavigationMenu({super.key});
@@ -22,7 +20,7 @@ class _NavigationMenuState extends State<SellerNavigationMenu> {
     SellerHomeScreen(),
     SellerCatalogueScreen(),
     SellerOrdersScreen(),
-    _NavigationPlaceholder(icon: Icons.portable_wifi_off_outlined, title: 'placeholder')
+    SellerSettingScreen(),
   ];
 
   @override
@@ -39,9 +37,9 @@ class _NavigationMenuState extends State<SellerNavigationMenu> {
               setState(() => selectedIndex = index);
             },
             backgroundColor: Theme.of(context).brightness == Brightness.dark
-                ?  Color.fromRGBO(102, 110, 122, 0.2)
+                ? Color.fromRGBO(102, 110, 122, 0.2)
                 : TColors.white,
-            indicatorColor: TColors.primary.withValues(alpha:  0.14),
+            indicatorColor: TColors.primary.withValues(alpha: 0.14),
             destinations: const [
               NavigationDestination(
                 icon: Icon(Iconsax.home_2),
@@ -63,27 +61,6 @@ class _NavigationMenuState extends State<SellerNavigationMenu> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _NavigationPlaceholder extends StatelessWidget {
-  const _NavigationPlaceholder({required this.icon, required this.title});
-
-  final IconData icon;
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 40, color: TColors.primary),
-          const SizedBox(height: 12),
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
-        ],
       ),
     );
   }

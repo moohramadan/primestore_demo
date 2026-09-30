@@ -33,15 +33,18 @@ class SellerCatalogueScreen extends StatelessWidget {
                 children: [
                   TSectionHeading(title: "Products", showActionButton: false, fontsize: TSizes.md -2,),
                   //SizedBox(width: 170,),
-                  TRoundedContainer(
-                    radius: 40,
-                    padding: EdgeInsets.symmetric(vertical:  TSizes.sm + 2, horizontal: TSizes.md ),
-                    backgroundColor:dark? TColors.darkerGrey: TColors.black,
-                    child: Row(children: [
-                      GestureDetector(onTap: () => Get.to(() => AddProductScreen()), child: Icon(Icons.add,color: TColors.white,)),
-                      SizedBox(width: 5,),
-                      Text('Add', style: Theme.of(context).textTheme.titleSmall!.apply(color: TColors.white))
-                    ],),
+                  GestureDetector(
+                    onTap: () => Get.to(() => AddProductScreen()),
+                    child: TRoundedContainer(
+                      radius: 40,
+                      padding: EdgeInsets.symmetric(vertical:  TSizes.sm + 2, horizontal: TSizes.md ),
+                      backgroundColor:dark? TColors.darkerGrey: TColors.black,
+                      child: Row(children: [
+                        Icon(Icons.add,color: TColors.white,),
+                        SizedBox(width: 5,),
+                        Text('Add', style: Theme.of(context).textTheme.titleSmall!.apply(color: TColors.white))
+                      ],),
+                    ),
                   ),
                 ],
               ),
@@ -52,9 +55,9 @@ class SellerCatalogueScreen extends StatelessWidget {
               SizedBox(height: TSizes.spaceBtwItems,),
               TCatalogueCategories(),
               SizedBox(height: TSizes.spaceBtwItems + 10,),
-              TRoundedContainer(
+              Container(
                 width: double.infinity,
-                backgroundColor: dark ? TColors.darkerGrey : TColors.grey,
+                
                 padding: const EdgeInsets.symmetric(vertical: 2),
                 child: Column(
                   children: [
@@ -69,6 +72,7 @@ class SellerCatalogueScreen extends StatelessWidget {
                         status: TIndicatorStatus.active,
                       ),
                     ),
+                    SizedBox(height: TSizes.spaceBtwInputFields,),
                     TProductTile(
                       title: 'Minimal Desk Lamp',
                       subtitle: 'Home Decor',
@@ -76,6 +80,7 @@ class SellerCatalogueScreen extends StatelessWidget {
                       icon: Iconsax.lamp,
                       status: TIndicatorStatus.draft,
                     ),
+                    SizedBox(height: TSizes.spaceBtwInputFields,),
                     TProductTile(
                       title: 'Smart Watch Pro',
                       subtitle: 'Electronics',
@@ -83,6 +88,7 @@ class SellerCatalogueScreen extends StatelessWidget {
                       icon: Iconsax.watch,
                       status: TIndicatorStatus.active,
                     ),
+                    SizedBox(height: TSizes.spaceBtwInputFields,),
                     TProductTile(
                       title: 'Premium Coffee Set',
                       subtitle: 'Kitchen',
@@ -90,6 +96,7 @@ class SellerCatalogueScreen extends StatelessWidget {
                       icon: Iconsax.cup,
                       status: TIndicatorStatus.notActive,
                     ),
+                    SizedBox(height: TSizes.spaceBtwInputFields,),
                     TProductTile(
                       title: 'Travel Backpack',
                       subtitle: 'Accessories',
@@ -97,6 +104,7 @@ class SellerCatalogueScreen extends StatelessWidget {
                       icon: Iconsax.bag,
                       status: TIndicatorStatus.active,
                     ),
+                    SizedBox(height: TSizes.spaceBtwInputFields,),
                     TProductTile(
                       title: 'Wireless Earbuds',
                       subtitle: 'Audio',
@@ -104,6 +112,7 @@ class SellerCatalogueScreen extends StatelessWidget {
                       icon: Iconsax.headphone,
                       status: TIndicatorStatus.draft,
                     ),
+                    SizedBox(height: TSizes.spaceBtwInputFields,),
                     TProductTile(
                       title: 'Ceramic Vase',
                       subtitle: 'Decor',

@@ -1,5 +1,6 @@
 import 'package:demo_project/features/personalization/screens/setting/setting.dart';
 import 'package:demo_project/features/shop/screens/home/home.dart';
+import 'package:demo_project/features/shop/screens/store/store.dart';
 import 'package:demo_project/navigation/widgets/liquid%20glass%20nav%20bar.dart';
 import 'package:demo_project/features/shop/screens/wishlist/wishlist.dart';
 import 'package:demo_project/utils/constants/colors.dart';
@@ -38,7 +39,7 @@ class NavigationMenu extends StatelessWidget {
 class NavigationController extends LiquidGlassNavController {
   final screens = [
     const HomeScreen(),
-    const Center(child: Text('Store')),
+    const StoreScreen(),
     const WishlistScreen(),
     const SettingsScreen(),
   ];

@@ -1,4 +1,4 @@
-import 'package:demo_project/features/personalization/screens/user_profile/widgets/edit_email.dart';
+import 'package:demo_project/features/personalization/screens/user_profile/widgets/edt_email/edit_email.dart';
 import 'package:demo_project/features/personalization/screens/user_profile/widgets/edit_name.dart';
 import 'package:demo_project/features/personalization/controllers/profile_controller.dart';
 import 'package:demo_project/common/widgets/effects/shimmer_effect.dart';
@@ -52,7 +52,7 @@ class PersonalInfoScreen extends StatelessWidget {
                     _InfoRow(
                       label: 'Name',
                       value: user.name,
-                      onTap: () => Get.to(() => const EditNameScreen()),
+                      onTap: () => Get.to(() => EditNameScreen()),
                     ),
                     _InfoRow(
                       label: 'User ID',
@@ -192,6 +192,7 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = THelperFunctions.isDarkMode(context);
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -224,7 +225,7 @@ class _InfoRow extends StatelessWidget {
                 ],
               ),
             ),
-            if (onTap != null) const Icon(Icons.chevron_right, color: Colors.black38),
+            if (onTap != null) Icon(Icons.chevron_right, color:dark? TColors.white:TColors.dark),
           ],
         ),
       ),

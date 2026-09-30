@@ -1,6 +1,9 @@
+import 'package:demo_project/common/widgets/buttons/elevevated_button.dart';
 import 'package:demo_project/common/widgets/textfield/textfield_rounded.dart';
 import 'package:demo_project/features/autentication/screens/email_change_otp/email_change_otp.dart';
+import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
+import 'package:demo_project/utils/helpers/helper_functions.dart';
 import 'package:demo_project/validators/validation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -12,38 +15,35 @@ class EditEmailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = THelperFunctions.isDarkMode(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor:dark?TColors.black:  TColors.white,
         elevation: 0,
         centerTitle: true,
-        leading: const BackButton(color: Colors.black),
-        title: const Text(
+        leading:  BackButton(color:dark? TColors.white: Colors.black),
+        title: Text(
           'Account',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
+          style: Theme.of(context).textTheme.titleLarge!.apply(fontSizeDelta: 6),
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(TSizes.defaultSpace),
         child: Form(
           key: controller.formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+               Text(
                 'Email',
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
+                style: Theme.of(context).textTheme.headlineMedium,
               ),
               const SizedBox(height: 12),
-              const Text(
+               Text(
                 'We\'ll send a confirmation to your new email before it '
                 'becomes active on your account.',
-                style: TextStyle(fontSize: 16, color: Colors.black54, height: 1.3),
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 24),
               TTextFieldRounded(
@@ -54,27 +54,13 @@ class EditEmailScreen extends StatelessWidget {
                 hintTextStyle: TextStyle(fontSize: TSizes.md),
               ),
               const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: () {
+              TRoundedElevatedButton(
+                onPressed:  () {
                     if (controller.formKey.currentState!.validate()) {
                       final email = controller.emailController.text.trim();
                       Get.to(() => EmailChangeOtp(email: email));
                     }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    disabledBackgroundColor: Colors.black,
-                    disabledForegroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(26),
-                    ),
-                  ),
-                  child: const Text('Update', style: TextStyle(fontSize: 16)),
-                ),
-              ),
+                  }, text: "Update"),
             ],
           ),
         ),

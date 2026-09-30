@@ -1,154 +1,76 @@
+import 'package:demo_project/common/widgets/buttons/elevevated_button.dart';
 import 'package:demo_project/common/widgets/textfield/textfield_rounded.dart';
+import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
+import 'package:demo_project/utils/helpers/helper_functions.dart';
+import 'package:demo_project/validators/validation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-/// Static edit-name screen, styled after the Uber "Name" edit page.
-/// Purely visual — no controllers, state, or update logic wired up.
 class EditNameScreen extends StatelessWidget {
-  const EditNameScreen({super.key});
+  EditNameScreen({super.key});
+
+  final controller = Get.put(EditNameController());
 
   @override
   Widget build(BuildContext context) {
+    final dark = THelperFunctions.isDarkMode(context);
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _TopBar(),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: ListView(
-                  children: const [
-                    SizedBox(height: 16),
-                    Text(
-                      'Name',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'This is the name you would like other people to use '
-                      'when referring to you.',
-                      style: TextStyle(
-                        fontSize: 17,
-                        color: Colors.black87,
-                        height: 1.3,
-                      ),
-                    ),
-                    SizedBox(height: 28),
-                    TTextFieldRounded(
-                      hintText: 'Enter new name',
-                      hintTextStyle: TextStyle(
-                fontSize: TSizes.md
-              ) 
-                    )
-                   
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    disabledBackgroundColor: Colors.black,
-                    disabledForegroundColor: Colors.white,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Update',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
-            ),
-          ],
+      appBar: AppBar(
+        backgroundColor: dark ? TColors.black : TColors.white,
+        elevation: 0,
+        centerTitle: true,
+        leading: BackButton(color: dark ? TColors.white : Colors.black),
+        title: Text(
+          'Account',
+          style: Theme.of(context).textTheme.titleLarge!.apply(fontSizeDelta: 6),
         ),
       ),
-    );
-  }
-}
-
-class _TopBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, size: 24),
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
-          const Expanded(
-            child: Text(
-              'Account',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          const SizedBox(width: 48), // balances the back icon
-        ],
-      ),
-    );
-  }
-}
-
-class _StaticField extends StatelessWidget {
-  const _StaticField({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF2F2F2),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
+      body: Padding(
+        padding: const EdgeInsets.all(TSizes.defaultSpace),
+        child: Form(
+          key: controller.formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  value,
-                  style: const TextStyle(fontSize: 17),
-                ),
+              Text(
+                'Name',
+                style: Theme.of(context).textTheme.headlineMedium,
               ),
-              const Icon(Icons.cancel, color: Colors.black, size: 20),
+              const SizedBox(height: 12),
+              Text(
+                'This is the name you would like other people to use '
+                'when referring to you.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 24),
+              TTextFieldRounded(
+                controller: controller.nameController,
+                hintText: 'Enter new name',
+                textInputAction: TextInputAction.done,
+                validator: (value) => TValidator.validateEmptyText('Name', value),
+                hintTextStyle: TextStyle(fontSize: TSizes.md),
+              ),
+              const Spacer(),
+              TRoundedElevatedButton(
+                onPressed: () {},
+                text: 'Update',
+              ),
             ],
           ),
         ),
-      ],
+      ),
     );
+  }
+}
+
+class EditNameController extends GetxController {
+  final nameController = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+
+  @override
+  void onClose() {
+    nameController.dispose();
+    super.onClose();
   }
 }

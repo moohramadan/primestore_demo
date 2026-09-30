@@ -111,7 +111,7 @@ class TTextFieldRounded extends StatelessWidget {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
-          borderSide: const BorderSide(color: TColors.error, width: 1.5),
+          borderSide: const BorderSide(color: Color.fromARGB(255, 164, 23, 23), width: 1.5),
         ),
       ),
     );

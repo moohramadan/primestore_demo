@@ -1,6 +1,9 @@
 import 'package:demo_project/common/widgets/custom_shapes/containers/indicator_container.dart';
 import 'package:demo_project/common/widgets/icons/round_icon.dart';
 import 'package:demo_project/common/widgets/texts/product_price_text.dart';
+import 'package:demo_project/utils/constants/colors.dart';
+import 'package:demo_project/utils/constants/sizes.dart';
+import 'package:demo_project/utils/helpers/helper_functions.dart';
 import 'package:flutter/material.dart';
 
 class TProductTile extends StatelessWidget {
@@ -23,20 +26,29 @@ class TProductTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: TRoundedIcon(icon: icon),
-      title: Text(title),
-      subtitle: Text(subtitle),
-      trailing: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          TProductPriceText(price: price),
-          const SizedBox(height: 6),
-          TIndicator(status: status),
-        ],
+    final dark = THelperFunctions.isDarkMode(context);
+    return Container(
+      padding: EdgeInsets.all(TSizes.sm),
+
+      decoration: BoxDecoration(
+        color: dark? TColors.darkerGrey: TColors.grey,
+        borderRadius: BorderRadius.circular(TSizes.borderRadiusLg)
       ),
-      onTap: onTap,
+      child: ListTile(
+        leading: TRoundedIcon(icon: icon),
+        title: Text(title),
+        subtitle: Text(subtitle),
+        trailing: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            TProductPriceText(price: price),
+            const SizedBox(height: 6),
+            TIndicator(status: status),
+          ],
+        ),
+        onTap: onTap,
+      ),
     );
   }
 }
