@@ -74,6 +74,18 @@ WHERE token = $1;
 DELETE FROM refresh_tokens
 WHERE user_id = $1;
 
+-- name: UpdateUserName :one
+UPDATE users
+SET name = $2
+WHERE id = $1
+RETURNING *;
+
+-- name: UpdateUserEmail :one
+UPDATE users
+SET email = $2
+WHERE id = $1
+RETURNING *;
+
 
 
 

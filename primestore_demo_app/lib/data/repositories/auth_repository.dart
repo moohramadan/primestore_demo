@@ -129,6 +129,39 @@ Future<String> sendOtp(String email) async {
   }
 }
 
+Future<String>requestEmailChange(String accessToken, String newEmail)async{
+  final url = Uri.parse('${ApiConstants.baseUrl}/users/me/email/request');
+
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $accessToken'},
+    body: jsonEncode({'new_email' : newEmail}),
+  );
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    return data['otp_token'];
+  } else {
+    final error = jsonDecode(response.body);
+    throw Exception(error['error'] ?? 'Failed to send code');
+  }
+}
+Future<UserModel> confirmEmailChange(String otpToken, String otp, String accessToken) async {
+  final url = Uri.parse('${ApiConstants.baseUrl}/users/me/email/confirm');
+
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $accessToken'},
+    body: jsonEncode({'otp_token': otpToken, 'otp': otp}),
+  );
+
+   if (response.statusCode == 200) {
+    return UserModel.fromJson(jsonDecode(response.body));
+  } else {
+    final error = jsonDecode(response.body);
+    throw Exception(error['error'] ?? 'Failed to load profile');
+  }
+}
+
 Future<void> confirmOtp(String otpToken, String otp) async {
   final url = Uri.parse('${ApiConstants.baseUrl}/users/verify-email/confirm');
 

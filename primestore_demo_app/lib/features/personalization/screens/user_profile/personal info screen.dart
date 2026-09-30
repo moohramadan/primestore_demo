@@ -63,7 +63,7 @@ class PersonalInfoScreen extends StatelessWidget {
                       label: 'Email',
                       value: user.email,
                       verified: true,
-                      onTap: () => Get.to(() => const EditEmailScreen()),
+                      onTap: () => Get.to(() =>  EditEmailScreen()),
                     ),
                     _InfoRow(
                       label: 'Phone number',

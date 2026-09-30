@@ -1,3 +1,4 @@
+import 'package:demo_project/common/widgets/effects/shimmer_effect.dart';
 import 'package:demo_project/features/autentication/controllers/session__controller.dart';
 import 'package:demo_project/features/autentication/controllers/user_controller.dart';
 import 'package:demo_project/features/autentication/screens/login/login%20screen.dart';
@@ -30,7 +31,7 @@ class AppEntryPoint extends StatelessWidget {
       future: sessionController.autoLoginFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(body: Center(child: TShimmerEffect(width: double.infinity, height: double.maxFinite) ));
         }
         final loggedIn = snapshot.data ?? false;
         return loggedIn ? NavigationMenu() : LoginScreen();

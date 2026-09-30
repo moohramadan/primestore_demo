@@ -15,4 +15,5 @@ class UserController extends GetxController {
     currentUser.value = null;
     accessToken.value = '';
   }
+  void updateUser(UserModel user) => currentUser.value = user;
 }

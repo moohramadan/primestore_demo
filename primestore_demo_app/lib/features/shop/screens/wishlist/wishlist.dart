@@ -1,4 +1,5 @@
 import 'package:demo_project/common/widgets/icons/wislist_icon.dart';
+import 'package:demo_project/common/widgets/effects/shimmer_effect.dart';
 import 'package:demo_project/features/shop/controllers/wishlist_controller.dart';
 import 'package:demo_project/features/shop/screens/product_details/product_detail.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +32,35 @@ class _WishlistScreenState extends State<WishlistScreen> {
       ),
       body: Obx(() {
         if (wishlist.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return GridView.builder(
+            padding: const EdgeInsets.all(12),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 0.75,
+            ),
+            itemCount: 6,
+            itemBuilder: (context, index) => const Card(
+              child: Padding(
+                padding: EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TShimmerEffect(
+                      width: double.infinity,
+                      height: 130,
+                      radius: 8,
+                    ),
+                    SizedBox(height: 10),
+                    TShimmerEffect(width: double.infinity, height: 14, radius: 4),
+                    SizedBox(height: 8),
+                    TShimmerEffect(width: 72, height: 14, radius: 4),
+                  ],
+                ),
+              ),
+            ),
+          );
         }
 
         if (wishlist.wishlistItems.isEmpty) {

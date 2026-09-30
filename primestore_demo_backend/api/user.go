@@ -20,6 +20,14 @@ type createUserRequest struct {
 	ConfirmPassword string `json:"confirm_password" binding:"required,min=6"`
 	Phone           string `json:"phone"`
 }
+type changeEmailRequest struct {
+	NewEmail string `json:"new_email" binding:"required,email"`
+}
+ 
+type confirmEmailChangeRequest struct {
+	OtpToken string `json:"otp_token" binding:"required"`
+	Otp      string `json:"otp" binding:"required"`
+}
 
 type userResponse struct {
 	ID    int64  `json:"id"`
@@ -443,6 +451,88 @@ func (server *Server) getMe(ctx *gin.Context) {
 		return
 	}
 
+	ctx.JSON(http.StatusOK, userResponse{
+		ID:    int64(user.ID),
+		Name:  user.Name,
+		Email: user.Email,
+		Phone: user.Phone.String,
+	})
+}
+func (server *Server) requestEmailChange(ctx *gin.Context) {
+	var req changeEmailRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+ 
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*util.UserClaims)
+ 
+	// fail fast if someone else already owns this email, before sending anything
+	if _, err := server.store.GetUserByEmail(ctx, req.NewEmail); err == nil {
+		ctx.JSON(http.StatusConflict, gin.H{"error": "an account with this email already exists"})
+		return
+	} else if err != sql.ErrNoRows {
+		internalError(ctx, err, "something went wrong")
+		return
+	}
+ 
+	otp, err := util.GenerateOTP()
+	if err != nil {
+		internalError(ctx, err, "something went wrong")
+		return
+	}
+ 
+	otpToken, err := server.tokenMaker.CreateEmailChangeToken(authPayload.UserID, req.NewEmail, otp, 10*time.Minute)
+	if err != nil {
+		internalError(ctx, err, "something went wrong")
+		return
+	}
+ 
+	if err := server.mailer.SendOTP(req.NewEmail, otp); err != nil {
+		internalError(ctx, err, "failed to send email")
+		return
+	}
+ 
+	ctx.JSON(http.StatusOK, sendOtpResponse{OtpToken: otpToken})
+}
+func (server *Server) confirmEmailChange(ctx *gin.Context) {
+	var req confirmEmailChangeRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+ 
+	claims, err := server.tokenMaker.VerifyEmailChangeToken(req.OtpToken)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired code"})
+		return
+	}
+ 
+	if !server.tokenMaker.OTPMatches(claims, req.Otp) {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired code"})
+		return
+	}
+ 
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*util.UserClaims)
+	if claims.UserID != authPayload.UserID {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "this code does not belong to your account"})
+		return
+	}
+ 
+	user, err := server.store.UpdateUserEmail(ctx, db.UpdateUserEmailParams{
+		ID:    int32(claims.UserID),
+		Email: claims.NewEmail,
+	})
+	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			ctx.JSON(http.StatusConflict, gin.H{"error": "an account with this email already exists"})
+			return
+		}
+		internalError(ctx, err, "could not update email")
+		return
+	}
+ 
 	ctx.JSON(http.StatusOK, userResponse{
 		ID:    int64(user.ID),
 		Name:  user.Name,

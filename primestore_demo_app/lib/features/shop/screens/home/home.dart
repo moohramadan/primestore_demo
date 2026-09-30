@@ -93,10 +93,11 @@ class HomeScreen extends StatelessWidget {
          Obx(() {
   if (controller.isLoading.value) {
     return TGridLayout(
-      itemCount: controller.featuredProducts.length, // placeholder count while real data loads
+      itemCount: 4,
       itemBuilder: (_, index) => const TShimmerEffect(
         width: double.infinity,
-        height: 180, // match your real card's height
+        height: 260,
+        radius: 8,
       ),
     );
   }

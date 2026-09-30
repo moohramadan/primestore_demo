@@ -1,3 +1,5 @@
+import 'package:demo_project/common/widgets/textfield/textfield_rounded.dart';
+import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:flutter/material.dart';
 
 /// Static edit-name screen, styled after the Uber "Name" edit page.
@@ -38,9 +40,13 @@ class EditNameScreen extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 28),
-                    _StaticField(label: 'First name', value: 'Muhammad'),
-                    SizedBox(height: 20),
-                    _StaticField(label: 'Last name', value: 'Ramadan'),
+                    TTextFieldRounded(
+                      hintText: 'Enter new name',
+                      hintTextStyle: TextStyle(
+                fontSize: TSizes.md
+              ) 
+                    )
+                   
                   ],
                 ),
               ),
