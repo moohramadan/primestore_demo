@@ -3,6 +3,7 @@ import 'package:demo_project/common/widgets/texts/t_headline.dart';
 import 'package:demo_project/common/widgets/texts/t_subtitle.dart';
 import 'package:demo_project/seller_features/autentication/screens/seller_signup/steps/account_type/widgets/account_type_option.dart';
 import 'package:demo_project/seller_features/autentication/screens/seller_signup/steps/business_details/business_details.dart';
+import 'package:demo_project/seller_features/autentication/screens/seller_signup/widgets/seller_signup_progress_indicator.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/helpers/helper_functions.dart';
@@ -41,7 +42,6 @@ class _AccountTypeContentState extends State<_AccountTypeContent> {
   @override
   Widget build(BuildContext context) {
     final isDark = THelperFunctions.isDarkMode(context);
-
     return Scaffold(
       backgroundColor: isDark ? TColors.dark : TColors.white,
       appBar: AppBar(
@@ -59,6 +59,8 @@ class _AccountTypeContentState extends State<_AccountTypeContent> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const SellerSignupProgressIndicator(currentStep: 1),
+                      SizedBox(height: TSizes.spaceBtwSections),
                       const THeadline(
                         title: 'What type of seller are you?',
                         maxLines: 2,

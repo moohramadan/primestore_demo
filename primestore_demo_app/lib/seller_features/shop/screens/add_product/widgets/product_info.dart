@@ -2,7 +2,7 @@ import 'package:demo_project/common/widgets/buttons/elevevated_button.dart';
 import 'package:demo_project/common/widgets/textfield/dropdown.dart';
 import 'package:demo_project/common/widgets/textfield/textfield_rounded.dart';
 import 'package:demo_project/common/widgets/texts/section_heading.dart';
-import 'package:demo_project/seller_features/shop/controllers/add_product_controller.dart';
+import 'package:demo_project/seller_features/autentication/controllers/add_product_controller.dart';
 import 'package:demo_project/seller_features/shop/screens/add_product/widgets/color_chip_picker.dart';
 import 'package:demo_project/seller_features/shop/screens/add_product/widgets/size_chip_picker.dart';
 import 'package:demo_project/seller_features/shop/screens/add_product/widgets/variant_stock_section.dart';

@@ -1,5 +1,9 @@
+import 'package:demo_project/common/widgets/list_title/product_tile.dart';
+import 'package:demo_project/common/widgets/list_title/top_product_tile.dart';
 import 'package:demo_project/common/widgets/texts/section_heading.dart';
 import 'package:demo_project/seller_features/shop/screens/seller_home/widgets/seller_categories.dart';
+import 'package:demo_project/seller_features/shop/screens/seller_home/widgets/seller_analytics_widget.dart';
+import 'package:demo_project/seller_features/shop/screens/seller_home/widgets/top_products.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/helpers/helper_functions.dart';
@@ -17,26 +21,47 @@ class SellerHomeScreen extends StatelessWidget {
       appBar: AppBar(
         leading: GestureDetector(
           onTap: () => Get.back(),
-          child: Icon(Icons.arrow_back, color: dark? TColors.white: TColors.black,)
+          child: Icon(
+            Icons.arrow_back,
+            color: dark ? TColors.white : TColors.black,
           ),
+        ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal:  TSizes.defaultSpace),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: TSizes.spaceBtwSections ,),
-            Text('Today', style: Theme.of(context).textTheme.bodyMedium,),
-            //SizedBox(height: TSizes.xs,),
-            TSectionHeading(title: '\$2,750.00', showActionButton: false, fontsize: 30, fontWeightDelta: 2,),
-            SizedBox(height: TSizes.spaceBtwItems,),
-            TSellerCategories(),
-            SizedBox(height: TSizes.spaceBtwItems,),
-            TSectionHeading(title: 'Needs attention', buttonTitle: 'Review', buttonFontSize: 15, textButtonColor: TColors.primary,)
-            
-          ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: TSizes.defaultSpace),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: TSizes.spaceBtwSections),
+              Text('Today', style: Theme.of(context).textTheme.bodyMedium),
+              //SizedBox(height: TSizes.xs,),
+              TSectionHeading(
+                title: '\$2,750.00',
+                showActionButton: false,
+                fontsize: 30,
+                fontWeightDelta: 2,
+              ),
+              SizedBox(height: TSizes.spaceBtwItems),
+              TSellerCategories(),
+              SizedBox(height: TSizes.spaceBtwItems),
+              TSellerAnalyticsWidget(),
+              SizedBox(height: TSizes.spaceBtwItems),
+              TSectionHeading(
+                title: 'Top products',
+                buttonTitle: 'view all',
+                buttonFontSize: 15,
+                textButtonColor: TColors.primary,
+              ),
+              SizedBox(height: TSizes.xs),
+              TTopProducts(),
+              
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+

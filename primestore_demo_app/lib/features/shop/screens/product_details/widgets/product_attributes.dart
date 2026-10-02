@@ -37,7 +37,7 @@ class TProductAttributes extends StatelessWidget {
           /// Selected Attribute pricing and description
           TRoundedContainer(
             padding: const EdgeInsets.all(TSizes.md),
-            backgroundColor: dark ? TColors.darkGrey : TColors.grey,
+            backgroundColor: dark ? TColors.darkerGrey : TColors.grey,
             child: Column(
               children: [
                 Row(

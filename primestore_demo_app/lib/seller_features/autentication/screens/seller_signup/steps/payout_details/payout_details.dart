@@ -3,6 +3,7 @@ import 'package:demo_project/common/widgets/texts/t_headline.dart';
 import 'package:demo_project/common/widgets/texts/t_subtitle.dart';
 import 'package:demo_project/seller_features/autentication/screens/seller_signup/steps/identity_verification/identity_verification.dart';
 import 'package:demo_project/seller_features/autentication/screens/seller_signup/steps/payout_details/widgets/payout_form.dart';
+import 'package:demo_project/seller_features/autentication/screens/seller_signup/widgets/seller_signup_progress_indicator.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/helpers/helper_functions.dart';
@@ -48,6 +49,8 @@ class _PayoutDetailsScreenState extends State<PayoutDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SellerSignupProgressIndicator(currentStep: 3),
+            const SizedBox(height: TSizes.spaceBtwSections),
             const THeadline(title: 'Payout details'),
             const SizedBox(height: TSizes.sm),
             const TSubtitle(

@@ -33,7 +33,7 @@ class TProductImageSlider extends StatelessWidget {
     
     return TCurvedEdgesWidget(
       child: Container(
-        color: dark ? TColors.darkGrey : TColors.light,
+        color: dark ? TColors.white : TColors.light,
         child: Stack(
           children: [
             /// Main large image
@@ -72,7 +72,7 @@ class TProductImageSlider extends StatelessWidget {
   onTap: () => controller.selectImage(index),
   child: TRoundedImage(
     width: 80,
-    backgroundColor: dark ? TColors.dark : TColors.white,
+    backgroundColor: dark ? TColors.white : TColors.white,
     border: Border.all(color: TColors.darkerGrey),
     padding: const EdgeInsets.all(TSizes.sm),
     imageUrl: images[index].imageUrl,

@@ -18,7 +18,7 @@ class TSellerCategories extends StatelessWidget {
     child: ListView(
            scrollDirection: Axis.horizontal,
            children: [
-          TIconsText(icon: Iconsax.element_4, text: 'All', iconSize: TSizes.iconLg,),
+          TIconsText(icon: Iconsax.element_4, text: 'All', iconSize: TSizes.iconLg, ),
           const SizedBox(width: 24),
 
           TIconsText(icon: Iconsax.headphone, text: 'Audio', iconSize: TSizes.iconLg,),

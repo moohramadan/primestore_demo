@@ -29,8 +29,9 @@ class TProductTile extends StatelessWidget {
     final dark = THelperFunctions.isDarkMode(context);
     return Container(
       padding: EdgeInsets.all(TSizes.sm),
-
+      
       decoration: BoxDecoration(
+        border: Border.all(  color:dark? TColors.grey: TColors.black),
         color: dark? TColors.darkerGrey: TColors.grey,
         borderRadius: BorderRadius.circular(TSizes.borderRadiusLg)
       ),

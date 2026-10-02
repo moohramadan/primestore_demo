@@ -88,7 +88,7 @@ class TProductMetaData extends StatelessWidget {
                 image: TImages.brandImage1, // static placeholder — no brand logo URL wired yet
                 width: 32,
                 height: 32,
-                overlayColor: darkMode ? TColors.white : TColors.black,
+                overlayColor: darkMode ? TColors.black : TColors.black,
               ),
               TBrandTitleWithVerifiedIcon(
                 title: product.brandName,

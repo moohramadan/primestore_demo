@@ -1,9 +1,10 @@
 import 'package:demo_project/common/widgets/buttons/elevevated_button.dart';
 import 'package:demo_project/common/widgets/texts/t_headline.dart';
 import 'package:demo_project/common/widgets/texts/t_subtitle.dart';
-import 'package:demo_project/navigation/seller_nav.dart';
+import 'package:demo_project/seller_features/autentication/screens/seller_signup/steps/account_created/account_created.dart';
 import 'package:demo_project/seller_features/autentication/screens/seller_signup/steps/upload_documents/controllers/upload_documents_controller.dart';
 import 'package:demo_project/seller_features/autentication/screens/seller_signup/steps/upload_documents/widgets/upload_image.dart';
+import 'package:demo_project/seller_features/autentication/screens/seller_signup/widgets/seller_signup_progress_indicator.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/helpers/helper_functions.dart';
@@ -29,6 +30,8 @@ class UploadVerificationDocuments extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SellerSignupProgressIndicator(currentStep: 5),
+              const SizedBox(height: TSizes.spaceBtwSections),
               const THeadline(title: 'Upload your ID'),
               const SizedBox(height: TSizes.sm),
               const TSubtitle(
@@ -38,7 +41,10 @@ class UploadVerificationDocuments extends StatelessWidget {
               const SizedBox(height: TSizes.spaceBtwSections),
               UploadImage(controller: controller),
               const Spacer(),
-              TRoundedElevatedButton(onPressed: () => Get.to(() => SellerNavigationMenu()), text: "Skip"),
+              TRoundedElevatedButton(
+                onPressed: () => Get.to(() => const AccountCreatedScreen()),
+                text: 'Skip',
+              ),
               const SizedBox(height: TSizes.sm),
               Obx(
                 () => TRoundedElevatedButton(
@@ -52,7 +58,6 @@ class UploadVerificationDocuments extends StatelessWidget {
                           ),
                         ),
                   text: 'Continue',
-                  
                 ),
               ),
 
