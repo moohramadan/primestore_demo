@@ -45,6 +45,7 @@ func NewServer(store db.Queries, tokenMaker *util.TokenMaker, mailer *util.Maile
 	router.GET("/products/featured", server.listFeaturedProducts)
 	addressLimiter := NewRateLimiter(5, 15*time.Minute)
 	authRoutes.POST("/addresses", rateLimitMiddleware(addressLimiter), server.createAddress)
+	authRoutes.PUT("/addresses/:id/default", server.setDefaultAddress)
 	authRoutes.GET("/addresses", server.listAddresses)
 	authRoutes.POST("/wishlist", server.addToWishlist)
 	authRoutes.DELETE("/wishlist/:product_id", server.removeFromWishlist)

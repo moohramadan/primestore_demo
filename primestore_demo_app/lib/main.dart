@@ -1,11 +1,9 @@
-import 'package:demo_project/common/widgets/effects/shimmer_effect.dart';
 import 'package:demo_project/features/autentication/controllers/session__controller.dart';
 import 'package:demo_project/features/autentication/controllers/user_controller.dart';
 import 'package:demo_project/features/autentication/screens/login/login%20screen.dart';
 import 'package:demo_project/features/shop/controllers/wishlist_controller.dart';
+import 'package:demo_project/features/shop/screens/home/widgets/home_screen_shimmer.dart';
 import 'package:demo_project/navigation/navigation%20menu.dart';
-
-
 
 import 'package:demo_project/utils/theme/theme.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +29,7 @@ class AppEntryPoint extends StatelessWidget {
       future: sessionController.autoLoginFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(body: Center(child: TShimmerEffect(width: double.infinity, height: double.maxFinite) ));
+          return const Scaffold(body: HomeScreenShimmer());
         }
         final loggedIn = snapshot.data ?? false;
         return loggedIn ? NavigationMenu() : LoginScreen();
@@ -40,8 +38,7 @@ class AppEntryPoint extends StatelessWidget {
   }
 }
 
-
- class MyApp extends StatelessWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override

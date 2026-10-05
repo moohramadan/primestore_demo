@@ -1,5 +1,6 @@
 import 'package:demo_project/common/widgets/texts/section_heading.dart';
 import 'package:demo_project/features/autentication/controllers/logout_controller.dart';
+import 'package:demo_project/features/autentication/screens/onboarding/screens/onboarding1/onboarding1.dart';
 import 'package:demo_project/features/personalization/screens/address/adress.dart';
 import 'package:demo_project/features/personalization/screens/setting/widgets/setting_box.dart';
 import 'package:demo_project/features/personalization/screens/user_profile/personal%20info%20screen.dart';
@@ -60,8 +61,8 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   TSettingBox(
                     icon: Iconsax.security_card,
-                    text: 'Account Privacy',
-                    onTap: () {},
+                    text: 'Onboarding',
+                    onTap: () => Get.to(() => Onboarding1()),
                   ),
               TSettingBox(
                     icon: Iconsax.shopping_cart,

@@ -59,6 +59,18 @@ class AddressController {
       throw Exception('Failed to load addresses');
     }
   }
+  Future<void> setDefaultAddress(String accessToken, int addressId) async {
+  final url = Uri.parse('${ApiConstants.baseUrl}/addresses/$addressId/default');
+  final response = await http.put(
+    url,
+    headers: {'Authorization': 'Bearer $accessToken'},
+  );
+
+  if (response.statusCode != 200) {
+    final error = jsonDecode(response.body);
+    throw Exception(error['error'] ?? 'Failed to set default address');
+  }
+}
 
 }
 
