@@ -1,4 +1,3 @@
-import 'dart:ui';
 
 import 'package:demo_project/common/widgets/icons/icons_text.dart';
 import 'package:demo_project/utils/constants/sizes.dart';

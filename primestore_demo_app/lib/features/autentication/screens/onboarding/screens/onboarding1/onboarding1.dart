@@ -1,5 +1,4 @@
 import 'package:demo_project/common/widgets/buttons/elevevated_button.dart';
-import 'package:demo_project/common/widgets/texts/rounded_text.dart';
 import 'package:demo_project/common/widgets/texts/t_headline.dart';
 import 'package:demo_project/features/autentication/controllers/onboarding_progress_indicator.dart';
 import 'package:demo_project/features/autentication/screens/onboarding/screens/onboarding1/widgets/selector.dart';

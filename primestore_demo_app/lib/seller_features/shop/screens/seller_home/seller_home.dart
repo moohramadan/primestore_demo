@@ -1,5 +1,3 @@
-import 'package:demo_project/common/widgets/list_title/product_tile.dart';
-import 'package:demo_project/common/widgets/list_title/top_product_tile.dart';
 import 'package:demo_project/common/widgets/texts/section_heading.dart';
 import 'package:demo_project/seller_features/shop/screens/seller_home/widgets/seller_categories.dart';
 import 'package:demo_project/seller_features/shop/screens/seller_home/widgets/seller_analytics_widget.dart';
@@ -9,7 +7,6 @@ import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/helpers/helper_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 
 class SellerHomeScreen extends StatelessWidget {
   const SellerHomeScreen({super.key});

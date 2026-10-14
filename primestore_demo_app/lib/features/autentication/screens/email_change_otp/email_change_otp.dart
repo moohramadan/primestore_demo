@@ -2,7 +2,6 @@ import 'package:demo_project/common/widgets/appbar/appbar.dart';
 import 'package:demo_project/common/widgets/buttons/elevevated_button.dart';
 import 'package:demo_project/common/widgets/texts/t_create_account_question.dart';
 import 'package:demo_project/features/autentication/controllers/email_change_controller.dart';
-import 'package:demo_project/features/autentication/controllers/otp_controller.dart';
 
 
 import 'package:demo_project/features/autentication/screens/otp/widgets/otp_pin_input.dart';
