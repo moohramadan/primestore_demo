@@ -1,5 +1,7 @@
 import 'package:demo_project/common/widgets/glass_morphism/glass_morphism_container.dart';
 import 'package:demo_project/utils/constants/colors.dart';
+import 'package:demo_project/utils/constants/sizes.dart';
+import 'package:demo_project/utils/helpers/helper_functions.dart';
 
 
 import 'package:flutter/material.dart';
@@ -10,12 +12,16 @@ class GlassLoginSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = THelperFunctions.isDarkMode(context);
     final controller = Get.find<GlassSlideController>();
     //final dark= THelperFunctions.isDarkMode(context);
 
     return Obx(
-      () => TGlassMorphism(
-        borderRadius: 12,
+      () => Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(TSizes.md),
+          color:dark? TColors.darkerGrey:TColors.grey
+        ),
         width: 300,
         height: 50,
         padding: const EdgeInsets.all(4),

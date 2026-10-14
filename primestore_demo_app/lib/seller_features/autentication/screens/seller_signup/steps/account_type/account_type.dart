@@ -43,7 +43,7 @@ class _AccountTypeContentState extends State<_AccountTypeContent> {
   Widget build(BuildContext context) {
     final isDark = THelperFunctions.isDarkMode(context);
     return Scaffold(
-      backgroundColor: isDark ? TColors.dark : TColors.white,
+      //backgroundColor: isDark ? TColors.dark : TColors.white,
       appBar: AppBar(
         automaticallyImplyLeading: true,
         iconTheme: IconThemeData(color: isDark ? TColors.white : TColors.black),

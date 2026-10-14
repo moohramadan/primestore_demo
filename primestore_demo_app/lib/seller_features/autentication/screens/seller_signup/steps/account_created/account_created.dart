@@ -20,7 +20,7 @@ class AccountCreatedScreen extends StatelessWidget {
         : const Color(0xFFE7F5EE);
 
     return Scaffold(
-      backgroundColor: isDark ? TColors.dark : TColors.white,
+      //backgroundColor: isDark ? TColors.dark : TColors.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(

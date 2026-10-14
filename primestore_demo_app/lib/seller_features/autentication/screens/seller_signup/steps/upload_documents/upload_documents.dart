@@ -19,7 +19,7 @@ class UploadVerificationDocuments extends StatelessWidget {
     final controller = Get.put(UploadDocumentsController());
     final dark = THelperFunctions.isDarkMode(context);
     return Scaffold(
-      backgroundColor: dark ? TColors.dark : TColors.white,
+      //backgroundColor: dark ? TColors.dark : TColors.white,
       appBar: AppBar(
         automaticallyImplyLeading: true,
         iconTheme: IconThemeData(color: dark ? TColors.white : TColors.black),

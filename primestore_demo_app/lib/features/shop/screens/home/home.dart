@@ -36,15 +36,9 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  SizedBox(
-                    height: 70,
-                    width: 70,
-                    child: CircleAvatar(
-                      backgroundColor: TColors.primary.withValues(alpha: 0.1),
-                      child: Icon(Iconsax.user),
-                    ),
-                  ),
+                  
                   SizedBox(width: 7),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

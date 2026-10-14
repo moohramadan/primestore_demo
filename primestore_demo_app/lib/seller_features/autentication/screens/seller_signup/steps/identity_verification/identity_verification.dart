@@ -22,7 +22,7 @@ class IdentityVerificationScreen extends StatelessWidget {
         : TColors.primary.withValues(alpha: 0.08);
 
     return Scaffold(
-      backgroundColor: isDark ? TColors.dark : TColors.white,
+      //backgroundColor: isDark ? TColors.dark : TColors.white,
       appBar: AppBar(
         automaticallyImplyLeading: true,
         iconTheme: IconThemeData(color: isDark ? TColors.white : TColors.black),
