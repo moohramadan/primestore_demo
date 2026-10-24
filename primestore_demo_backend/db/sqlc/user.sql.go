@@ -16,7 +16,7 @@ INSERT INTO users (
   name, email, google_id, is_verified
 ) VALUES (
   $1, $2, $3, true
-) RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller
+) RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id
 `
 
 type CreateGoogleUserParams struct {
@@ -37,7 +37,6 @@ func (q *Queries) CreateGoogleUser(ctx context.Context, arg CreateGoogleUserPara
 		&i.CreatedAt,
 		&i.IsVerified,
 		&i.GoogleID,
-		&i.IsSeller,
 	)
 	return i, err
 }
@@ -74,7 +73,7 @@ INSERT INTO users (
   name, email, password_hash, phone
 ) VALUES (
   $1, $2, $3, $4
-) RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller
+) RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id
 `
 
 type CreateUserParams struct {
@@ -101,7 +100,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.CreatedAt,
 		&i.IsVerified,
 		&i.GoogleID,
-		&i.IsSeller,
 	)
 	return i, err
 }
@@ -155,7 +153,7 @@ func (q *Queries) GetRefreshToken(ctx context.Context, token string) (RefreshTok
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller FROM users
+SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -171,13 +169,12 @@ func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 		&i.CreatedAt,
 		&i.IsVerified,
 		&i.GoogleID,
-		&i.IsSeller,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller FROM users
+SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -193,13 +190,12 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.CreatedAt,
 		&i.IsVerified,
 		&i.GoogleID,
-		&i.IsSeller,
 	)
 	return i, err
 }
 
 const getUserByGoogleID = `-- name: GetUserByGoogleID :one
-SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller FROM users
+SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id FROM users
 WHERE google_id = $1 LIMIT 1
 `
 
@@ -215,13 +211,12 @@ func (q *Queries) GetUserByGoogleID(ctx context.Context, googleID sql.NullString
 		&i.CreatedAt,
 		&i.IsVerified,
 		&i.GoogleID,
-		&i.IsSeller,
 	)
 	return i, err
 }
 
 const getUserByPhone = `-- name: GetUserByPhone :one
-SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller FROM users
+SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id FROM users
 WHERE phone = $1 LIMIT 1
 `
 
@@ -237,7 +232,6 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phone sql.NullString) (Use
 		&i.CreatedAt,
 		&i.IsVerified,
 		&i.GoogleID,
-		&i.IsSeller,
 	)
 	return i, err
 }
@@ -246,7 +240,7 @@ const linkGoogleAccount = `-- name: LinkGoogleAccount :one
 UPDATE users
 SET google_id = $2, is_verified = true
 WHERE id = $1
-RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller
+RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id
 `
 
 type LinkGoogleAccountParams struct {
@@ -266,13 +260,12 @@ func (q *Queries) LinkGoogleAccount(ctx context.Context, arg LinkGoogleAccountPa
 		&i.CreatedAt,
 		&i.IsVerified,
 		&i.GoogleID,
-		&i.IsSeller,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller FROM users
+SELECT id, name, email, password_hash, phone, created_at, is_verified, google_id FROM users
 ORDER BY id
 LIMIT $1
 OFFSET $2
@@ -301,7 +294,6 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.CreatedAt,
 			&i.IsVerified,
 			&i.GoogleID,
-			&i.IsSeller,
 		); err != nil {
 			return nil, err
 		}
@@ -320,7 +312,7 @@ const updateUserEmail = `-- name: UpdateUserEmail :one
 UPDATE users
 SET email = $2
 WHERE id = $1
-RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller
+RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id
 `
 
 type UpdateUserEmailParams struct {
@@ -340,7 +332,6 @@ func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams
 		&i.CreatedAt,
 		&i.IsVerified,
 		&i.GoogleID,
-		&i.IsSeller,
 	)
 	return i, err
 }
@@ -349,7 +340,7 @@ const updateUserName = `-- name: UpdateUserName :one
 UPDATE users
 SET name = $2
 WHERE id = $1
-RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller
+RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id
 `
 
 type UpdateUserNameParams struct {
@@ -369,7 +360,6 @@ func (q *Queries) UpdateUserName(ctx context.Context, arg UpdateUserNameParams) 
 		&i.CreatedAt,
 		&i.IsVerified,
 		&i.GoogleID,
-		&i.IsSeller,
 	)
 	return i, err
 }
@@ -378,7 +368,7 @@ const updateUserPhone = `-- name: UpdateUserPhone :one
 UPDATE users
 SET phone = $2
 WHERE id = $1
-RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id, is_seller
+RETURNING id, name, email, password_hash, phone, created_at, is_verified, google_id
 `
 
 type UpdateUserPhoneParams struct {
@@ -398,7 +388,6 @@ func (q *Queries) UpdateUserPhone(ctx context.Context, arg UpdateUserPhoneParams
 		&i.CreatedAt,
 		&i.IsVerified,
 		&i.GoogleID,
-		&i.IsSeller,
 	)
 	return i, err
 }

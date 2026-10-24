@@ -40,7 +40,7 @@ class SellerHomeScreen extends StatelessWidget {
                 fontWeightDelta: 2,
               ),
               SizedBox(height: TSizes.spaceBtwItems),
-              TSellerCategories(),
+              //TSellerCategories(),
               SizedBox(height: TSizes.spaceBtwItems),
               TSellerAnalyticsWidget(),
               SizedBox(height: TSizes.spaceBtwItems),

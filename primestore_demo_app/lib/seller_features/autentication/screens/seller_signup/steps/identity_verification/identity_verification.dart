@@ -1,8 +1,7 @@
 import 'package:demo_project/common/widgets/buttons/elevevated_button.dart';
 import 'package:demo_project/common/widgets/texts/t_headline.dart';
 import 'package:demo_project/common/widgets/texts/t_subtitle.dart';
-import 'package:demo_project/seller_features/autentication/screens/seller_signup/steps/upload_documents/upload_documents.dart';
-import 'package:demo_project/seller_features/autentication/screens/seller_signup/widgets/seller_signup_progress_indicator.dart';
+import 'package:demo_project/seller_features/personalization/screens/seller_profile/widgets/upload_documents/upload_documents.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/helpers/helper_functions.dart';
@@ -38,7 +37,6 @@ class IdentityVerificationScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SellerSignupProgressIndicator(currentStep: 4),
                       const SizedBox(height: TSizes.spaceBtwSections),
                       const THeadline(title: 'Identity verification'),
                       const SizedBox(height: TSizes.sm),

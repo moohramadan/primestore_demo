@@ -84,7 +84,6 @@ type User struct {
 	CreatedAt    sql.NullTime   `json:"created_at"`
 	IsVerified   bool           `json:"is_verified"`
 	GoogleID     sql.NullString `json:"google_id"`
-	IsSeller     bool           `json:"is_seller"`
 }
 
 type Wishlist struct {

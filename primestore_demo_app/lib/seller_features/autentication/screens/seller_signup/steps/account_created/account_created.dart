@@ -29,7 +29,7 @@ class AccountCreatedScreen extends StatelessWidget {
           ),
           child: Column(
             children: [
-              const SellerSignupProgressIndicator(currentStep: 5),
+              const SellerSignupProgressIndicator(currentStep: 4),
               const Spacer(),
               Container(
                 width: 112,
@@ -55,7 +55,7 @@ class AccountCreatedScreen extends StatelessWidget {
               ),
               const SizedBox(height: TSizes.md),
               Text(
-                'Your setup is complete. Head to your dashboard to manage your store and prepare your first listing.',
+                'Your setup is complete. You can verify your identity later from your profile. Head to your dashboard to manage your store and prepare your first listing.',
                 textAlign: TextAlign.center,
                 style: Theme.of(
                   context,

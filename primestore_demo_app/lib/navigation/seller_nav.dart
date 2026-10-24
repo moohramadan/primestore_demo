@@ -1,4 +1,4 @@
-import 'package:demo_project/seller_features/personalization/screens/seller_setting/seller_setting.dart';
+import 'package:demo_project/seller_features/personalization/screens/seller_profile/seller_profile.dart';
 import 'package:demo_project/seller_features/shop/screens/seller_catalogue/seller_catalogue.dart';
 import 'package:demo_project/seller_features/shop/screens/seller_home/seller_home.dart';
 import 'package:demo_project/seller_features/shop/screens/seller_orders/seller_orders.dart';
@@ -20,7 +20,7 @@ class _NavigationMenuState extends State<SellerNavigationMenu> {
     SellerHomeScreen(),
     SellerCatalogueScreen(),
     SellerOrdersScreen(),
-    SellerSettingScreen(),
+    SellerProfileScreen(),
   ];
 
   @override

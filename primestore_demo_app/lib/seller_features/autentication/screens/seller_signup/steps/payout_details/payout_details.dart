@@ -1,7 +1,7 @@
 import 'package:demo_project/common/widgets/buttons/elevevated_button.dart';
 import 'package:demo_project/common/widgets/texts/t_headline.dart';
 import 'package:demo_project/common/widgets/texts/t_subtitle.dart';
-import 'package:demo_project/seller_features/autentication/screens/seller_signup/steps/identity_verification/identity_verification.dart';
+import 'package:demo_project/seller_features/autentication/screens/seller_signup/steps/account_created/account_created.dart';
 import 'package:demo_project/seller_features/autentication/screens/seller_signup/steps/payout_details/widgets/payout_form.dart';
 import 'package:demo_project/seller_features/autentication/screens/seller_signup/widgets/seller_signup_progress_indicator.dart';
 import 'package:demo_project/utils/constants/colors.dart';
@@ -23,14 +23,12 @@ class _PayoutDetailsScreenState extends State<PayoutDetailsScreen> {
   final _accountHolderController = TextEditingController();
   final _bankNameController = TextEditingController();
   final _accountNumberController = TextEditingController();
-  final _routingNumberController = TextEditingController();
 
   @override
   void dispose() {
     _accountHolderController.dispose();
     _bankNameController.dispose();
     _accountNumberController.dispose();
-    _routingNumberController.dispose();
     super.dispose();
   }
 
@@ -64,13 +62,12 @@ class _PayoutDetailsScreenState extends State<PayoutDetailsScreen> {
                   accountHolderController: _accountHolderController,
                   bankNameController: _bankNameController,
                   accountNumberController: _accountNumberController,
-                  routingNumberController: _routingNumberController,
                 ),
               ),
             ),
             const SizedBox(height: TSizes.spaceBtwItems),
             TRoundedElevatedButton(
-              onPressed: () => Get.to(() => IdentityVerificationScreen()),
+              onPressed: () => Get.to(() => const AccountCreatedScreen()),
               text: 'Continue',
             ),
             const SizedBox(height: TSizes.spaceBtwItems * 2),

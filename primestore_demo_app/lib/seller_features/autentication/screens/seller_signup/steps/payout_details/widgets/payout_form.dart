@@ -11,14 +11,12 @@ class PayoutForm extends StatelessWidget {
     required this.accountHolderController,
     required this.bankNameController,
     required this.accountNumberController,
-    required this.routingNumberController,
   });
 
   final GlobalKey<FormState> formKey;
   final TextEditingController accountHolderController;
   final TextEditingController bankNameController;
   final TextEditingController accountNumberController;
-  final TextEditingController routingNumberController;
 
   @override
   Widget build(BuildContext context) {
@@ -55,17 +53,6 @@ class PayoutForm extends StatelessWidget {
             textInputAction: TextInputAction.next,
             validator: (value) =>
                 TValidator.validateEmptyText('Account number', value),
-          ),
-          const SizedBox(height: TSizes.spaceBtwInputFields),
-          TTextFieldRounded(
-            controller: routingNumberController,
-            icon: Icons.route_outlined,
-            focusedBorderColor: TColors.primary,
-            hintText: 'Routing number',
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.done,
-            validator: (value) =>
-                TValidator.validateEmptyText('Routing number', value),
           ),
         ],
       ),
