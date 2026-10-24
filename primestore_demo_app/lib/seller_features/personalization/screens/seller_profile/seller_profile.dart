@@ -1,5 +1,6 @@
 import 'package:demo_project/common/widgets/buttons/elevevated_button.dart';
 import 'package:demo_project/common/widgets/texts/section_heading.dart';
+import 'package:demo_project/navigation/navigation%20menu.dart';
 import 'package:demo_project/seller_features/autentication/screens/seller_signup/steps/identity_verification/identity_verification.dart';
 import 'package:demo_project/seller_features/personalization/screens/seller_setting/seller_setting.dart';
 import 'package:demo_project/utils/constants/colors.dart';
@@ -76,6 +77,13 @@ class SellerProfileScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: TSizes.spaceBtwItems),
+              TRoundedElevatedButton(
+                onPressed: () => Get.offAll(() => const NavigationMenu()),
+                text: 'Switch to shopping',
+                icon: Icons.shopping_bag_outlined,
+                color: isDark ? TColors.darkGrey : TColors.darkerGrey,
               ),
             ],
           ),

@@ -23,15 +23,19 @@ class SellerRepository {
       throw _responseError(response, 'Could not load seller profile');
     }
 
-    final decoded = jsonDecode(response.body);
-    if (decoded is! Map<String, dynamic> ||
-        decoded['seller_profile'] is! Map<String, dynamic>) {
-      throw const FormatException('The seller profile response is invalid.');
-    }
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic> ||
+          decoded['seller_profile'] is! Map<String, dynamic>) {
+        throw const FormatException();
+      }
 
-    return SellerProfile.fromJson(
-      decoded['seller_profile'] as Map<String, dynamic>,
-    );
+      return SellerProfile.fromJson(
+        decoded['seller_profile'] as Map<String, dynamic>,
+      );
+    } on FormatException {
+      throw Exception('Could not load seller profile. Please try again.');
+    }
   }
 
   Future<void> createSellerProfile({
@@ -73,10 +77,10 @@ class SellerRepository {
       final body = jsonDecode(response.body);
       final message = body is Map<String, dynamic> && body['error'] is String
           ? body['error'] as String
-          : '$fallback (HTTP ${response.statusCode}).';
+          : '$fallback. Please try again.';
       return Exception(message);
     } on FormatException {
-      return Exception('$fallback (HTTP ${response.statusCode}).');
+      return Exception('$fallback. Please try again.');
     }
   }
 }
