@@ -3,6 +3,7 @@ import 'package:demo_project/common/widgets/texts/t_headline.dart';
 import 'package:demo_project/common/widgets/texts/t_subtitle.dart';
 import 'package:demo_project/seller_features/autentication/screens/seller_signup/steps/business_details/widgets/business_form.dart';
 import 'package:demo_project/seller_features/autentication/screens/seller_signup/steps/payout_details/payout_details.dart';
+import 'package:demo_project/seller_features/autentication/models/seller_signup_data.dart';
 import 'package:demo_project/seller_features/autentication/screens/seller_signup/widgets/seller_signup_progress_indicator.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
@@ -12,7 +13,10 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 
 class BusinessDetailsScreen extends StatefulWidget {
-  const BusinessDetailsScreen({super.key, this.accountType});
+  const BusinessDetailsScreen({
+    super.key,
+    this.accountType,
+  });
 
   final String? accountType;
 
@@ -66,7 +70,28 @@ class _BusinessDetailsScreenState extends State<BusinessDetailsScreen> {
               const SizedBox(height: TSizes.spaceBtwItems),
               const Spacer(),
               TRoundedElevatedButton(
-                onPressed: () => Get.to(() => PayoutDetailsScreen()),
+                onPressed: () {
+                  if (!_formKey.currentState!.validate()) return;
+                  final accountType = widget.accountType;
+                  if (accountType == null) {
+                    Get.snackbar(
+                      'Business details',
+                      'Start seller signup from “Become a seller” to create a seller profile.',
+                    );
+                    return;
+                  }
+
+                  Get.to(
+                    () => PayoutDetailsScreen(
+                      signupData: SellerSignupData(
+                        accountType: accountType,
+                        businessName: _businessNameController.text.trim(),
+                        businessPhone: _phoneNumberController.text.trim(),
+                        businessAddress: _addressController.text.trim(),
+                      ),
+                    ),
+                  );
+                },
                 text: 'Continue',
               ),
               const SizedBox(height: TSizes.spaceBtwItems * 2),

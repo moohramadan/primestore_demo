@@ -58,7 +58,7 @@ func main() {
 		log.Println("warning: GOOGLE_CLIENT_ID is not set, Google sign-in will reject every request")
 	}
 
-	server := api.NewServer(*store, tokenMaker, mailer, googleClientID)
+	server := api.NewServer(*store, conn, tokenMaker, mailer, googleClientID)
 
 	err = server.Start(serverAddress)
 	if err != nil {

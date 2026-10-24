@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	db "primestore_demo_backend/db/sqlc"
 	"primestore_demo_backend/util"
 	"time"
@@ -10,15 +11,17 @@ import (
 
 type Server struct {
 	store          db.Queries
+	conn           *sql.DB
 	tokenMaker     *util.TokenMaker
 	mailer         *util.Mailer
 	googleClientID string
 	router         *gin.Engine
 }
 
-func NewServer(store db.Queries, tokenMaker *util.TokenMaker, mailer *util.Mailer, googleClientID string) *Server {
+func NewServer(store db.Queries, conn *sql.DB, tokenMaker *util.TokenMaker, mailer *util.Mailer, googleClientID string) *Server {
 	server := &Server{
 		store:          store,
+		conn:           conn,
 		tokenMaker:     tokenMaker,
 		mailer:         mailer,
 		googleClientID: googleClientID,
@@ -51,6 +54,9 @@ func NewServer(store db.Queries, tokenMaker *util.TokenMaker, mailer *util.Maile
 	authRoutes.DELETE("/wishlist/:product_id", server.removeFromWishlist)
 	authRoutes.GET("/wishlist", server.listWishlist)
 	authRoutes.GET("/wishlist/ids", server.listWishlistedIDs)
+	sellerLimiter := NewRateLimiter(3, 15*time.Minute)
+    authRoutes.POST("/seller/profile", rateLimitMiddleware(sellerLimiter), server.createSellerProfile)
+    authRoutes.GET("/seller/profile", server.getSellerProfile)
 
 	server.router = router
 	return server

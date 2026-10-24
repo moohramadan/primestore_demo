@@ -29,15 +29,24 @@ class _AccountTypeContent extends StatefulWidget {
 class _AccountTypeContentState extends State<_AccountTypeContent> {
   static const _accountTypes = [
     (
+      'individual',
       'Individual',
       "I'm selling as an individual\n(not a registered business).",
     ),
-    ('Private business', "I'm a registered business\n(e.g. LLC, Ltd, etc.)."),
-    ('Public business', "I'm a publicly traded company."),
-    ('Non-profit', "I'm a registered non-profit\norganization."),
+    (
+      'private_business',
+      'Private business',
+      "I'm a registered business\n(e.g. LLC, Ltd, etc.).",
+    ),
+    ('public_business', 'Public business', "I'm a publicly traded company."),
+    (
+      'non_profit',
+      'Non-profit',
+      "I'm a registered non-profit\norganization.",
+    ),
   ];
 
-  String _selectedAccountType = 'Individual';
+  String _selectedAccountType = 'individual';
 
   @override
   Widget build(BuildContext context) {
@@ -73,8 +82,8 @@ class _AccountTypeContentState extends State<_AccountTypeContent> {
                       const SizedBox(height: TSizes.spaceBtwItems),
                       for (final accountType in _accountTypes) ...[
                         AccountTypeOption(
-                          title: accountType.$1,
-                          description: accountType.$2,
+                          title: accountType.$2,
+                          description: accountType.$3,
                           selected: _selectedAccountType == accountType.$1,
                           onTap: () => setState(
                             () => _selectedAccountType = accountType.$1,
