@@ -1,4 +1,3 @@
-
 import 'package:demo_project/common/widgets/chips/choice_chips.dart';
 import 'package:demo_project/common/widgets/custom_shapes/containers/rounded_container.dart';
 import 'package:demo_project/common/widgets/texts/product_price_text.dart';
@@ -13,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/src/extension_instance.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+
 //import 'package:get/get_state_manager/src/rx_flutter/rx_notifier.dart';
 
 class TProductAttributes extends StatelessWidget {
@@ -23,13 +23,14 @@ class TProductAttributes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
-    final controller = Get.find<ProductDetailController>(tag: product.id.toString());
+    final controller = Get.find<ProductDetailController>(
+      tag: product.id.toString(),
+    );
 
     return Obx(() {
       final variant = controller.selectedVariant.value;
-      final price = variant?.price ?? 0;
-      final discountPercent = variant?.discountPercent ?? 0;
-      final originalPrice = discountPercent > 0 ? price / (1 - discountPercent / 100) : price;
+      final price = variant?.effectivePrice ?? 0;
+      final originalPrice = variant?.price ?? price;
       final inStock = (variant?.stock ?? 0) > 0;
 
       return Column(
@@ -42,30 +43,40 @@ class TProductAttributes extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const TSectionHeading(title: "Variation", showActionButton: false),
+                    const TSectionHeading(
+                      title: "Variation",
+                      showActionButton: false,
+                    ),
                     const SizedBox(width: TSizes.spaceBtwItems),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            const TProductTitleText(title: 'Price: ', smallSize: true),
+                            const TProductTitleText(
+                              title: 'Price: ',
+                              smallSize: true,
+                            ),
                             const SizedBox(width: TSizes.spaceBtwItems),
-                            if (discountPercent > 0) ...[
+                            if (variant?.isOnSale ?? false) ...[
                               Text(
-                                '\$${originalPrice.toStringAsFixed(0)}',
-                                style: Theme.of(context).textTheme.titleSmall!.apply(
+                                '\$${originalPrice.toStringAsFixed(2)}',
+                                style: Theme.of(context).textTheme.titleSmall!
+                                    .apply(
                                       decoration: TextDecoration.lineThrough,
                                     ),
                               ),
                               const SizedBox(width: TSizes.spaceBtwItems),
                             ],
-                            TProductPriceText(price: price.toStringAsFixed(0)),
+                            TProductPriceText(price: price.toStringAsFixed(2)),
                           ],
                         ),
                         Row(
                           children: [
-                            const TProductTitleText(title: 'Stock: ', smallSize: true),
+                            const TProductTitleText(
+                              title: 'Stock: ',
+                              smallSize: true,
+                            ),
                             Text(
                               variant == null
                                   ? 'Unavailable'

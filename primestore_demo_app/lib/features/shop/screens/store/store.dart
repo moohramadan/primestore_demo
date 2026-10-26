@@ -243,8 +243,8 @@ class _StoreScreenState extends State<StoreScreen> {
     if (_sort == _StoreSort.priceLowToHigh ||
         _sort == _StoreSort.priceHighToLow) {
       matches.sort((first, second) {
-        final firstPrice = first.defaultVariant?.price ?? 0;
-        final secondPrice = second.defaultVariant?.price ?? 0;
+        final firstPrice = first.defaultVariant?.effectivePrice ?? 0;
+        final secondPrice = second.defaultVariant?.effectivePrice ?? 0;
         return _sort == _StoreSort.priceLowToHigh
             ? firstPrice.compareTo(secondPrice)
             : secondPrice.compareTo(firstPrice);

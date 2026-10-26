@@ -38,7 +38,6 @@ class HomeScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  
                   SizedBox(width: 7),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,36 +77,74 @@ class HomeScreen extends StatelessWidget {
               SizedBox(height: TSizes.spaceBtwItems),
               TCarouselSlider(),
               SizedBox(height: TSizes.spaceBtwItems),
-              TCategoryBuilder(),
+              TCategoryBuilder(controller: controller),
               SizedBox(height: TSizes.sm),
 
-              TSectionHeading(
-                title: 'Featured Products',
-                textButtonColor: TColors.primary,
-              ),
-              SizedBox(height: TSizes.spaceBtwItems),
-
               Obx(() {
+                final products = controller.featuredProducts;
                 if (controller.isLoading.value) {
-                  return TGridLayout(
-                    itemCount: 4,
-                    itemBuilder: (_, index) => const TShimmerEffect(
-                      width: double.infinity,
-                      height: 260,
-                      radius: 8,
-                    ),
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TSectionHeading(
+                        title: controller.selectedCategoryName,
+                        textButtonColor: TColors.primary,
+                      ),
+                      const SizedBox(height: TSizes.spaceBtwItems),
+                      TGridLayout(
+                        itemCount: 4,
+                        itemBuilder: (_, index) => const TShimmerEffect(
+                          width: double.infinity,
+                          height: 260,
+                          radius: 8,
+                        ),
+                      ),
+                    ],
                   );
                 }
-                return TGridLayout(
-                  itemCount: controller.featuredProducts.length,
-                  itemBuilder: (_, index) {
-                    final product = controller.featuredProducts[index];
-                    return GestureDetector(
-                      onTap: () =>
-                          Get.to(() => ProductDetail(product: product)),
-                      child: TVerticalProductCard(product: product),
-                    );
-                  },
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TSectionHeading(
+                      title: controller.selectedCategoryName,
+                      textButtonColor: TColors.primary,
+                    ),
+                    const SizedBox(height: TSizes.spaceBtwItems),
+                    if (controller.productsError.value != null)
+                      Center(
+                        child: Column(
+                          children: [
+                            Text(
+                              controller.productsError.value!,
+                              textAlign: TextAlign.center,
+                            ),
+                            TextButton(
+                              onPressed: controller.retrySelectedCategory,
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (products.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(TSizes.xl),
+                          child: Text('No products found in this category.'),
+                        ),
+                      )
+                    else
+                      TGridLayout(
+                        itemCount: products.length,
+                        itemBuilder: (_, index) {
+                          final product = products[index];
+                          return GestureDetector(
+                            onTap: () =>
+                                Get.to(() => ProductDetail(product: product)),
+                            child: TVerticalProductCard(product: product),
+                          );
+                        },
+                      ),
+                  ],
                 );
               }),
             ],

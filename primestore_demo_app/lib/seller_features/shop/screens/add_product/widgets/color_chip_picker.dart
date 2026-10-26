@@ -85,18 +85,20 @@ class ColorChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 16,
-              height: 16,
-              decoration: BoxDecoration(
-                color: dotColor,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white24),
+            if (name.isNotEmpty) ...[
+              Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: dotColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white24),
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
+              const SizedBox(width: 8),
+            ],
             Text(
-              name,
+              name.isEmpty ? 'No color' : name,
               style: TextStyle(
                 color: selected
                     ? (isDark
@@ -247,6 +249,11 @@ class ColorVariantSection extends StatelessWidget {
               onTap: () => controller.removeColor(name),
             ),
           ),
+          if (!controller.selectedColors.contains(''))
+            ColorChip(
+              name: '',
+              onTap: () => controller.addColor(''),
+            ),
           AddColorChip(
             onTap: () => showColorPickerSheet(
               context: context,

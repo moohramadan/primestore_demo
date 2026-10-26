@@ -151,10 +151,21 @@ func (s *ImageStorage) VerifyImage(ctx context.Context, object string) error {
 	return nil
 }
 
+func (s *ImageStorage) DeleteImage(ctx context.Context, object string) error {
+	_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(object),
+	})
+	return err
+}
+
 // PublicURL turns a stored object key into a full URL. Older rows that
 // already hold a full URL are returned unchanged.
 func (s *ImageStorage) PublicURL(stored string) string {
 	if stored == "" || strings.HasPrefix(stored, "http://") || strings.HasPrefix(stored, "https://") {
+		return stored
+	}
+	if !strings.HasPrefix(stored, "products/") {
 		return stored
 	}
 	return s.publicBase + "/" + stored

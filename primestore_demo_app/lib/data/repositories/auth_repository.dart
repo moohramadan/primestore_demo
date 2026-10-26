@@ -24,6 +24,13 @@ class RefreshResult {
   RefreshResult({required this.accessToken, required this.refreshToken, required this.user});
 }
 
+class SessionExpiredException implements Exception {
+  const SessionExpiredException();
+
+  @override
+  String toString() => 'Session expired. Please sign in again.';
+}
+
 class AuthController {
   Future<UserModel> signUp({
     required String name,
@@ -195,7 +202,7 @@ Future<RefreshResult> refreshSession(String refreshToken) async {
       user: UserModel.fromJson(data['user']),
     );
   } else {
-    throw Exception('Session expired');
+    throw const SessionExpiredException();
   }
 }
 Future<void> logout(String refreshToken) async {

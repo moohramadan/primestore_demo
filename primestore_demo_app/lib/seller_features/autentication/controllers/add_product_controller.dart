@@ -33,27 +33,21 @@ const Map<ProductSizeType, List<String>> sizeOptionsByType = {
 // ---------------------------------------------------------------------
 
 /// One row that becomes a `product_variants` record on the backend.
-/// `size` is null for categories with no sizing scheme.
+/// `color` is empty and `size` is null when the product has no variants.
 class ProductVariantDraft {
   final String color;
   final String? size;
-  final double price;
-  final double discountPercent;
   final int stock;
 
   const ProductVariantDraft({
     required this.color,
     this.size,
-    required this.price,
-    required this.discountPercent,
     required this.stock,
   });
 
   Map<String, dynamic> toJson() => {
         'color': color,
         if (size != null) 'size': size,
-        'price': price,
-        'discount_percent': discountPercent,
         'stock': stock,
       };
 }
@@ -206,10 +200,7 @@ class AddProductController extends GetxController {
     }
   }
 
-  List<ProductVariantDraft> buildVariants({
-    required double price,
-    required double discountPercent,
-  }) {
+  List<ProductVariantDraft> buildVariants() {
     return stockControllers.entries.map((entry) {
       final parts = entry.key.split('::');
       final color = parts[0];
@@ -218,16 +209,45 @@ class AddProductController extends GetxController {
       return ProductVariantDraft(
         color: color,
         size: size,
-        price: price,
-        discountPercent: discountPercent,
         stock: stock,
       );
     }).toList();
   }
 
+  static final _moneyPattern = RegExp(r'^\d{1,8}(\.\d{1,2})?$');
+
+  String? validate() {
+    if (nameController.text.trim().isEmpty) return 'Enter a product name.';
+
+    final original = originalPriceController.text.trim();
+    if (!_moneyPattern.hasMatch(original) || double.parse(original) <= 0) {
+      return 'Enter the original price as a number, for example 1500 or 1500.50.';
+    }
+    final sale = salePriceController.text.trim();
+    if (sale.isNotEmpty) {
+      if (!_moneyPattern.hasMatch(sale) || double.parse(sale) <= 0) {
+        return 'Enter the sale price as a number, for example 1200 or 1200.50.';
+      }
+      if (double.parse(sale) > double.parse(original)) {
+        return 'The sale price cannot be higher than the original price.';
+      }
+    }
+    if (selectedCategoryId.value == null) return 'Choose a category.';
+    if (stockControllers.isEmpty) {
+      return needsSize
+          ? 'Pick at least one size or color and size.'
+          : 'Add at least one product variant.';
+    }
+    for (final controller in stockControllers.values) {
+      final stock = int.tryParse(controller.text.trim());
+      if (stock == null || stock < 0) {
+        return 'Enter the stock for every variant.';
+      }
+    }
+    return null;
+  }
+
   Map<String, dynamic> buildProductPayload({
-    required double price,
-    required double discountPercent,
     required List<String> imagePaths,
   }) {
     return {
@@ -238,25 +258,16 @@ class AddProductController extends GetxController {
       'original_price': originalPriceController.text.trim(),
       'sale_price': salePriceController.text.trim(),
       'image_paths': imagePaths,
-      'variants': buildVariants(price: price, discountPercent: discountPercent)
+      'variants': buildVariants()
           .map((v) => v.toJson())
           .toList(),
     };
   }
 
   Future<void> submitProduct({required List<String> imagePaths}) async {
-    final price = double.tryParse(originalPriceController.text.trim()) ?? 0;
-    final salePrice = double.tryParse(salePriceController.text.trim());
-    final discountPercent = (salePrice != null && salePrice > 0 && price > 0)
-       ? ((price - salePrice) / price * 100).clamp(0, 100).toDouble()
-        : 0.0;
-
-    final payload = buildProductPayload(
-      price: price,
-      discountPercent: discountPercent,
-      imagePaths: imagePaths,
+    await _productRepository.createProduct(
+      buildProductPayload(imagePaths: imagePaths),
     );
-    await _productRepository.createProduct(payload);
   }
 
   @override

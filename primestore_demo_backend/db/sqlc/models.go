@@ -65,6 +65,7 @@ type ProductVariant struct {
 	Price           string         `json:"price"`
 	DiscountPercent int32          `json:"discount_percent"`
 	Stock           int32          `json:"stock"`
+	SalePrice       sql.NullString `json:"sale_price"`
 }
 
 type RefreshToken struct {

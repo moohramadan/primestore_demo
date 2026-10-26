@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:demo_project/common/widgets/texts/section_heading.dart';
@@ -9,6 +10,7 @@ import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/helpers/helper_functions.dart';
 import 'package:demo_project/utils/popups/loaders.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -25,11 +27,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final ImagePicker _imagePicker = ImagePicker();
   final ProductRepository _productRepository = ProductRepository();
   final List<Uint8List> _photos = [];
+  List<String> _uploadedImagePaths = [];
+  final Set<String> _pendingCleanupPaths = {};
   bool _isPickingPhoto = false;
   bool _isSavingProduct = false;
+  bool _isCleaningUploads = false;
+  bool _allowPop = false;
 
   Future<void> _pickPhoto() async {
-    if (_isPickingPhoto) return;
+    if (_isPickingPhoto || _isCleaningUploads || _isSavingProduct) return;
     if (_photos.length >= _maxPhotos) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('You can add up to 5 photos.')),
@@ -49,7 +55,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
       final bytes = await photo.readAsBytes();
       if (!mounted) return;
-      setState(() => _photos.add(bytes));
+      setState(() {
+        _photos.add(bytes);
+      });
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -60,12 +68,55 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
   }
 
-  void _removePhoto(int index) {
-    setState(() => _photos.removeAt(index));
+  Future<void> _removePhoto(int index) async {
+    if (_isSavingProduct || _isCleaningUploads) return;
+    final uploadedPath = index < _uploadedImagePaths.length
+        ? _uploadedImagePaths[index]
+        : null;
+    setState(() {
+      _photos.removeAt(index);
+      if (uploadedPath != null) _uploadedImagePaths.removeAt(index);
+    });
+    if (uploadedPath == null) return;
+
+    try {
+      await _productRepository.deleteUnusedProductImage(uploadedPath);
+    } catch (error) {
+      _pendingCleanupPaths.add(uploadedPath);
+      if (!mounted) return;
+      TLoaders.errorSnackBar(
+        title: 'Image cleanup failed',
+        message: error.toString().replaceFirst('Exception: ', ''),
+      );
+    }
+  }
+
+  Future<void> _discardAndClose() async {
+    if (_isSavingProduct || _isCleaningUploads) return;
+    setState(() => _isCleaningUploads = true);
+    try {
+      final paths = {..._uploadedImagePaths, ..._pendingCleanupPaths};
+      for (final path in paths) {
+        await _productRepository.deleteUnusedProductImage(path);
+      }
+      _pendingCleanupPaths.clear();
+      _uploadedImagePaths.clear();
+      if (!mounted) return;
+      setState(() => _allowPop = true);
+      Navigator.of(context).pop();
+    } catch (error) {
+      if (!mounted) return;
+      TLoaders.errorSnackBar(
+        title: 'Image cleanup failed',
+        message: error.toString().replaceFirst('Exception: ', ''),
+      );
+    } finally {
+      if (mounted) setState(() => _isCleaningUploads = false);
+    }
   }
 
   Future<void> _saveProduct() async {
-    if (_isSavingProduct) return;
+    if (_isSavingProduct || _isCleaningUploads) return;
     final controller = addProductController;
     if (controller.isLoadingProductOptions.value ||
         controller.productOptionsError.value != null ||
@@ -83,21 +134,38 @@ class _AddProductScreenState extends State<AddProductScreen> {
       );
       return;
     }
+    final problem = controller.validate();
+    if (problem != null) {
+      TLoaders.errorSnackBar(title: 'Check your product', message: problem);
+      return;
+    }
 
     setState(() => _isSavingProduct = true);
     try {
-      final imagePaths = await _productRepository.uploadProductImages(_photos);
+      for (final path in _pendingCleanupPaths.toList()) {
+        await _productRepository.deleteUnusedProductImage(path);
+        _pendingCleanupPaths.remove(path);
+      }
+      final imagePaths = await _productRepository.uploadProductImages(
+        _photos,
+        existingPaths: _uploadedImagePaths,
+        onPathsUpdated: (paths) => _uploadedImagePaths = List<String>.of(paths),
+      );
       await controller.submitProduct(imagePaths: imagePaths);
       if (!mounted) return;
-      TLoaders.successSnackBar(
-        title: 'Product added',
-        message: 'Your product was created successfully.',
-      );
+      setState(() => _allowPop = true);
+      Navigator.of(context).pop();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        TLoaders.successSnackBar(
+          title: 'Product added',
+          message: 'Your product was created successfully.',
+        );
+      });
     } catch (error) {
       if (!mounted) return;
       TLoaders.errorSnackBar(
         title: 'Could not add product',
-        message: error.toString(),
+        message: error.toString().replaceFirst('Exception: ', ''),
       );
     } finally {
       if (mounted) setState(() => _isSavingProduct = false);
@@ -105,9 +173,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   @override
+  void dispose() {
+    Get.delete<AddProductController>();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
-    return Scaffold(
+    return PopScope<void>(
+      canPop: _allowPop,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) unawaited(_discardAndClose());
+      },
+      child: Scaffold(
       appBar: AppBar(
         automaticallyImplyActions: true,
         titleSpacing: TSizes.md * 6,
@@ -150,6 +229,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -172,7 +252,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
               shape: const CircleBorder(),
               child: InkWell(
                 customBorder: const CircleBorder(),
-                onTap: () => _removePhoto(index),
+                onTap: _isSavingProduct || _isCleaningUploads
+                    ? null
+                    : () => _removePhoto(index),
                 child: const Padding(
                   padding: EdgeInsets.all(4),
                   child: Icon(Icons.close, size: 18),
@@ -193,7 +275,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
         color: dark ? TColors.darkerGrey : TColors.grey,
         borderRadius: BorderRadius.circular(TSizes.cardRadiusMd),
         child: InkWell(
-          onTap: _isPickingPhoto ? null : _pickPhoto,
+          onTap: _isPickingPhoto || _isSavingProduct || _isCleaningUploads
+              ? null
+              : _pickPhoto,
           borderRadius: BorderRadius.circular(TSizes.cardRadiusMd),
           child: Center(
             child: _isPickingPhoto

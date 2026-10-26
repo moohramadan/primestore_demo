@@ -20,8 +20,8 @@ class VariantStockSection extends StatelessWidget {
 
       if (keys.isEmpty) {
         final message = controller.needsSize
-            ? 'Pick at least one color and size to set stock'
-            : 'Pick at least one color to set stock';
+            ? 'Pick at least one size or color and size to set stock'
+            : 'Add at least one product variant to set stock';
         return Text(
           message,
           style: TextStyle(
@@ -36,7 +36,9 @@ class VariantStockSection extends StatelessWidget {
           final parts = key.split('::');
           final color = parts[0];
           final size = parts.length > 1 ? parts[1] : null;
-          final label = size == null ? color : '$color / $size';
+          final label = size == null
+              ? (color.isEmpty ? 'Standard' : color)
+              : [if (color.isNotEmpty) color, size].join(' / ');
 
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),

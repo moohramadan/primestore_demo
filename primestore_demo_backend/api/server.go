@@ -16,7 +16,7 @@ type Server struct {
 	mailer         *util.Mailer
 	googleClientID string
 	router         *gin.Engine
-	images *util.ImageStorage
+	images         *util.ImageStorage
 }
 
 func NewServer(store db.Queries, conn *sql.DB, tokenMaker *util.TokenMaker, mailer *util.Mailer, googleClientID string, images *util.ImageStorage) *Server {
@@ -48,6 +48,7 @@ func NewServer(store db.Queries, conn *sql.DB, tokenMaker *util.TokenMaker, mail
 	authRoutes.POST("/users/me/email/confirm", rateLimitMiddleware(emailChangeConfirmLimiter), server.confirmEmailChange)
 	router.GET("/categories", server.listCategories)
 	router.GET("/products/featured", server.listFeaturedProducts)
+	router.GET("/products/category/:id", server.listProductsByCategory)
 	addressLimiter := NewRateLimiter(5, 15*time.Minute)
 	authRoutes.POST("/addresses", rateLimitMiddleware(addressLimiter), server.createAddress)
 	authRoutes.PUT("/addresses/:id/default", server.setDefaultAddress)
@@ -57,14 +58,15 @@ func NewServer(store db.Queries, conn *sql.DB, tokenMaker *util.TokenMaker, mail
 	authRoutes.GET("/wishlist", server.listWishlist)
 	authRoutes.GET("/wishlist/ids", server.listWishlistedIDs)
 	sellerLimiter := NewRateLimiter(3, 15*time.Minute)
-    authRoutes.POST("/seller/profile", rateLimitMiddleware(sellerLimiter), server.createSellerProfile)
-    authRoutes.GET("/seller/profile", server.getSellerProfile)
+	authRoutes.POST("/seller/profile", rateLimitMiddleware(sellerLimiter), server.createSellerProfile)
+	authRoutes.GET("/seller/profile", server.getSellerProfile)
 	router.GET("/brands", server.listBrands)
-    uploadLimiter := NewRateLimiter(20, 15*time.Minute)
-    authRoutes.POST("/seller/products/upload-urls", rateLimitMiddleware(uploadLimiter), sellerOnly(server), server.createProductUploadURLs)
-    productLimiter := NewRateLimiter(20, 15*time.Minute)
-    authRoutes.POST("/seller/products", rateLimitMiddleware(productLimiter), sellerOnly(server), server.createProduct)
-
+	uploadLimiter := NewRateLimiter(20, 15*time.Minute)
+	authRoutes.POST("/seller/products/upload-urls", rateLimitMiddleware(uploadLimiter), sellerOnly(server), server.createProductUploadURLs)
+	authRoutes.POST("/seller/products/upload-cleanup", sellerOnly(server), server.deleteUnusedProductImage)
+	productLimiter := NewRateLimiter(20, 15*time.Minute)
+	authRoutes.POST("/seller/products", rateLimitMiddleware(productLimiter), sellerOnly(server), server.createProduct)
+	authRoutes.GET("/seller/products", sellerOnly(server), server.listSellerProducts)
 
 	server.router = router
 	return server

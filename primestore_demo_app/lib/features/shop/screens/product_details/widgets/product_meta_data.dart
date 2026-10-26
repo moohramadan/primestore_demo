@@ -28,9 +28,9 @@ class TProductMetaData extends StatelessWidget {
 
     return Obx(() {
       final variant = controller.selectedVariant.value;
-      final price = variant?.price ?? 0;
+      final price = variant?.effectivePrice ?? 0;
       final discountPercent = variant?.discountPercent ?? 0;
-      final originalPrice = discountPercent > 0 ? price / (1 - discountPercent / 100) : price;
+      final originalPrice = variant?.price ?? price;
       final inStock = (variant?.stock ?? 0) > 0;
 
       return Column(
@@ -40,7 +40,6 @@ class TProductMetaData extends StatelessWidget {
           Row(
             children: [
               if (discountPercent > 0) ...[
-                /// Sale Tag
                 TRoundedContainer(
                   radius: TSizes.sm,
                   backgroundColor: TColors.secondary.withValues(alpha: 0.8),
@@ -51,15 +50,15 @@ class TProductMetaData extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: TSizes.spaceBtwItems),
-
-                /// Original Price
+              ],
+              if (variant?.isOnSale ?? false) ...[
                 Text(
-                  '\$${originalPrice.toStringAsFixed(0)}',
+                  '\$${originalPrice.toStringAsFixed(2)}',
                   style: Theme.of(context).textTheme.titleSmall!.apply(decoration: TextDecoration.lineThrough),
                 ),
                 const SizedBox(width: TSizes.spaceBtwItems),
               ],
-              TProductPriceText(price: price.toStringAsFixed(0), isLarge: true),
+              TProductPriceText(price: price.toStringAsFixed(2), isLarge: true),
             ],
           ),
           const SizedBox(height: TSizes.spaceBtwItems / 1.5),

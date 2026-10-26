@@ -1,16 +1,31 @@
 -- name: ListFeaturedProducts :many
-SELECT p.*, b.name AS brand_name, b.is_verified AS brand_verified
+SELECT p.*, b.name AS brand_name, b.is_verified AS brand_verified,
+       COALESCE(c.name, '') AS category_name
 FROM products p
 LEFT JOIN brands b ON p.brand_id = b.id
+LEFT JOIN categories c ON p.category_id = c.id
 WHERE p.is_featured = true
 ORDER BY p.id;
 
 -- name: ListProductsByCategory :many
-SELECT p.*, b.name AS brand_name, b.is_verified AS brand_verified
+SELECT p.*, b.name AS brand_name, b.is_verified AS brand_verified,
+       COALESCE(c.name, '') AS category_name
 FROM products p
 LEFT JOIN brands b ON p.brand_id = b.id
+LEFT JOIN categories c ON c.id = p.category_id
 WHERE p.category_id = $1
 ORDER BY p.id;
+
+-- name: ListSellerProducts :many
+SELECT p.id, p.name, p.description, p.is_featured,
+       COALESCE(b.name, '') AS brand_name,
+       COALESCE(b.is_verified, false) AS brand_verified,
+       COALESCE(c.name, '') AS category_name
+FROM products p
+LEFT JOIN brands b ON b.id = p.brand_id
+LEFT JOIN categories c ON c.id = p.category_id
+WHERE p.seller_id = $1
+ORDER BY p.id DESC;
 
 -- name: GetProduct :one
 SELECT p.*, b.name AS brand_name, b.is_verified AS brand_verified
@@ -42,7 +57,11 @@ VALUES ($1, $2, $3, $4, $5) RETURNING *;
 INSERT INTO product_images (product_id, image_url, sort_order)
 VALUES ($1, $2, $3);
 
--- name: CreateProductVariant :exec
-INSERT INTO product_variants (product_id, color, size, price, discount_percent, stock)
-VALUES ($1, $2, $3, $4, $5, $6);
+-- name: IsProductImageReferenced :one
+SELECT EXISTS (
+    SELECT 1 FROM product_images WHERE image_url = $1
+);
 
+-- name: CreateProductVariant :exec
+INSERT INTO product_variants (product_id, color, size, price, sale_price, discount_percent, stock)
+VALUES ($1, $2, $3, $4, $5, $6, $7);

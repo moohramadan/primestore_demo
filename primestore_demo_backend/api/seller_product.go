@@ -36,6 +36,37 @@ func (server *Server) listBrands(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
+func (server *Server) listSellerProducts(ctx *gin.Context) {
+	profile := ctx.MustGet(sellerProfileKey).(db.SellerProfile)
+	rows, err := server.store.ListSellerProducts(ctx, sql.NullInt32{
+		Int32: profile.ID,
+		Valid: true,
+	})
+	if err != nil {
+		internalError(ctx, err, "could not fetch seller products")
+		return
+	}
+
+	bases := make([]productBase, len(rows))
+	for i, row := range rows {
+		bases[i] = productBase{
+			ID:            row.ID,
+			Name:          row.Name,
+			Description:   row.Description,
+			CategoryName:  row.CategoryName,
+			IsFeatured:    row.IsFeatured,
+			BrandName:     sql.NullString{String: row.BrandName, Valid: row.BrandName != ""},
+			BrandVerified: sql.NullBool{Bool: row.BrandVerified, Valid: true},
+		}
+	}
+	products, err := server.buildProductResponses(ctx, bases)
+	if err != nil {
+		internalError(ctx, err, "could not fetch seller products")
+		return
+	}
+	ctx.JSON(http.StatusOK, products)
+}
+
 // ---------------------------------------------------------------------------
 // Step 1: the app asks for signed upload URLs
 // ---------------------------------------------------------------------------
@@ -48,6 +79,10 @@ type uploadFile struct {
 type uploadURLsRequest struct {
 	// max=5 must match util.MaxProductImages (struct tags cannot use constants).
 	Files []uploadFile `json:"files" binding:"required,min=1,max=5,dive"`
+}
+
+type deleteUploadedImageRequest struct {
+	Path string `json:"path" binding:"required"`
 }
 
 type uploadURLResponse struct {
@@ -93,12 +128,42 @@ func (server *Server) createProductUploadURLs(ctx *gin.Context) {
 	})
 }
 
+func (server *Server) deleteUnusedProductImage(ctx *gin.Context) {
+	var req deleteUploadedImageRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	profile := ctx.MustGet(sellerProfileKey).(db.SellerProfile)
+	if !isSellerImagePath(req.Path, profile.ID) {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid image path"})
+		return
+	}
+
+	referenced, err := server.store.IsProductImageReferenced(ctx, req.Path)
+	if err != nil {
+		internalError(ctx, err, "could not check image usage")
+		return
+	}
+	if referenced {
+		ctx.JSON(http.StatusConflict, gin.H{"error": "image is used by a saved product"})
+		return
+	}
+	if err := server.images.DeleteImage(ctx, req.Path); err != nil {
+		internalError(ctx, err, "could not delete unused image")
+		return
+	}
+
+	ctx.Status(http.StatusNoContent)
+}
+
 // ---------------------------------------------------------------------------
 // Step 2: the app saves the product, referring to the uploaded images by path
 // ---------------------------------------------------------------------------
 
 type productVariantInput struct {
-	Color string `json:"color" binding:"required,max=50"`
+	Color string `json:"color" binding:"max=50"`
 	Size  string `json:"size" binding:"max=20"`
 	Stock int32  `json:"stock" binding:"min=0,max=1000000"`
 }
@@ -149,6 +214,7 @@ func (server *Server) createProduct(ctx *gin.Context) {
 		return
 	}
 	var discount int32
+	var salePrice sql.NullString
 	if strings.TrimSpace(req.SalePrice) != "" {
 		sale, ok := parseMoney(req.SalePrice)
 		if !ok || sale <= 0 {
@@ -160,6 +226,7 @@ func (server *Server) createProduct(ctx *gin.Context) {
 			return
 		}
 		discount = int32(((original-sale)*100 + original/2) / original) // rounded percent off
+		salePrice = sql.NullString{String: formatCents(sale), Valid: true}
 	}
 
 	// --- variants ---------------------------------------------------------
@@ -169,10 +236,6 @@ func (server *Server) createProduct(ctx *gin.Context) {
 		v := &req.Variants[i]
 		v.Color = strings.TrimSpace(v.Color)
 		v.Size = strings.TrimSpace(v.Size)
-		if v.Color == "" {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "every variant needs a color"})
-			return
-		}
 		key := strings.ToLower(v.Color + "::" + v.Size)
 		if seenVariant[key] {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "duplicate variant: " + v.Color + " " + v.Size})
@@ -183,10 +246,9 @@ func (server *Server) createProduct(ctx *gin.Context) {
 
 	// --- images -----------------------------------------------------------
 	// Paths must be ones this seller was issued: products/<their id>/<32 hex>.<ext>
-	pathPattern := regexp.MustCompile(fmt.Sprintf(`^products/%d/[0-9a-f]{32}\.(jpg|png|webp)$`, profile.ID))
 	seenPath := make(map[string]bool, len(req.ImagePaths))
 	for _, p := range req.ImagePaths {
-		if !pathPattern.MatchString(p) || seenPath[p] {
+		if !isSellerImagePath(p, profile.ID) || seenPath[p] {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid image path"})
 			return
 		}
@@ -248,9 +310,10 @@ func (server *Server) createProduct(ctx *gin.Context) {
 	for _, v := range req.Variants {
 		err := qtx.CreateProductVariant(ctx, db.CreateProductVariantParams{
 			ProductID:       product.ID,
-			Color:           sql.NullString{String: v.Color, Valid: true},
+			Color:           sql.NullString{String: v.Color, Valid: v.Color != ""},
 			Size:            sql.NullString{String: v.Size, Valid: v.Size != ""},
 			Price:           price,
+			SalePrice:       salePrice,
 			DiscountPercent: discount,
 			Stock:           v.Stock,
 		})
@@ -258,6 +321,7 @@ func (server *Server) createProduct(ctx *gin.Context) {
 			internalError(ctx, err, "could not save product variants")
 			return
 		}
+
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -285,4 +349,34 @@ func (server *Server) createProduct(ctx *gin.Context) {
 	}
 	log.Printf("product %d saved but response could not be built: %v", product.ID, err)
 	ctx.JSON(http.StatusCreated, gin.H{"product": gin.H{"id": product.ID}})
+}
+
+func isSellerImagePath(path string, sellerID int32) bool {
+	prefix := fmt.Sprintf("products/%d/", sellerID)
+	if !strings.HasPrefix(path, prefix) {
+		return false
+	}
+
+	filename := strings.TrimPrefix(path, prefix)
+	extension := ""
+	for _, candidate := range []string{".jpg", ".png", ".webp"} {
+		if strings.HasSuffix(filename, candidate) {
+			extension = candidate
+			break
+		}
+	}
+	if extension == "" {
+		return false
+	}
+
+	stem := strings.TrimSuffix(filename, extension)
+	if len(stem) != 32 {
+		return false
+	}
+	for _, char := range stem {
+		if (char < '0' || char > '9') && (char < 'a' || char > 'f') {
+			return false
+		}
+	}
+	return true
 }

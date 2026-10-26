@@ -64,8 +64,8 @@ func (q *Queries) CreateProductImage(ctx context.Context, arg CreateProductImage
 }
 
 const createProductVariant = `-- name: CreateProductVariant :exec
-INSERT INTO product_variants (product_id, color, size, price, discount_percent, stock)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO product_variants (product_id, color, size, price, sale_price, discount_percent, stock)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 `
 
 type CreateProductVariantParams struct {
@@ -73,6 +73,7 @@ type CreateProductVariantParams struct {
 	Color           sql.NullString `json:"color"`
 	Size            sql.NullString `json:"size"`
 	Price           string         `json:"price"`
+	SalePrice       sql.NullString `json:"sale_price"`
 	DiscountPercent int32          `json:"discount_percent"`
 	Stock           int32          `json:"stock"`
 }
@@ -83,6 +84,7 @@ func (q *Queries) CreateProductVariant(ctx context.Context, arg CreateProductVar
 		arg.Color,
 		arg.Size,
 		arg.Price,
+		arg.SalePrice,
 		arg.DiscountPercent,
 		arg.Stock,
 	)
@@ -127,10 +129,25 @@ func (q *Queries) GetProduct(ctx context.Context, id int32) (GetProductRow, erro
 	return i, err
 }
 
+const isProductImageReferenced = `-- name: IsProductImageReferenced :one
+SELECT EXISTS (
+    SELECT 1 FROM product_images WHERE image_url = $1
+)
+`
+
+func (q *Queries) IsProductImageReferenced(ctx context.Context, imageUrl string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, isProductImageReferenced, imageUrl)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const listFeaturedProducts = `-- name: ListFeaturedProducts :many
-SELECT p.id, p.seller_id, p.category_id, p.name, p.description, p.created_at, p.brand_id, p.is_featured, b.name AS brand_name, b.is_verified AS brand_verified
+SELECT p.id, p.seller_id, p.category_id, p.name, p.description, p.created_at, p.brand_id, p.is_featured, b.name AS brand_name, b.is_verified AS brand_verified,
+       COALESCE(c.name, '') AS category_name
 FROM products p
 LEFT JOIN brands b ON p.brand_id = b.id
+LEFT JOIN categories c ON p.category_id = c.id
 WHERE p.is_featured = true
 ORDER BY p.id
 `
@@ -146,6 +163,7 @@ type ListFeaturedProductsRow struct {
 	IsFeatured    bool           `json:"is_featured"`
 	BrandName     sql.NullString `json:"brand_name"`
 	BrandVerified sql.NullBool   `json:"brand_verified"`
+	CategoryName  string         `json:"category_name"`
 }
 
 func (q *Queries) ListFeaturedProducts(ctx context.Context) ([]ListFeaturedProductsRow, error) {
@@ -168,6 +186,7 @@ func (q *Queries) ListFeaturedProducts(ctx context.Context) ([]ListFeaturedProdu
 			&i.IsFeatured,
 			&i.BrandName,
 			&i.BrandVerified,
+			&i.CategoryName,
 		); err != nil {
 			return nil, err
 		}
@@ -249,7 +268,7 @@ func (q *Queries) ListProductImagesByProductIDs(ctx context.Context, productIds 
 }
 
 const listProductVariants = `-- name: ListProductVariants :many
-SELECT id, product_id, color, size, price, discount_percent, stock FROM product_variants WHERE product_id = $1 ORDER BY id
+SELECT id, product_id, color, size, price, discount_percent, stock, sale_price FROM product_variants WHERE product_id = $1 ORDER BY id
 `
 
 func (q *Queries) ListProductVariants(ctx context.Context, productID int32) ([]ProductVariant, error) {
@@ -269,6 +288,7 @@ func (q *Queries) ListProductVariants(ctx context.Context, productID int32) ([]P
 			&i.Price,
 			&i.DiscountPercent,
 			&i.Stock,
+			&i.SalePrice,
 		); err != nil {
 			return nil, err
 		}
@@ -284,7 +304,7 @@ func (q *Queries) ListProductVariants(ctx context.Context, productID int32) ([]P
 }
 
 const listProductVariantsByProductIDs = `-- name: ListProductVariantsByProductIDs :many
-SELECT id, product_id, color, size, price, discount_percent, stock FROM product_variants
+SELECT id, product_id, color, size, price, discount_percent, stock, sale_price FROM product_variants
 WHERE product_id = ANY($1::int[])
 ORDER BY product_id, id
 `
@@ -306,6 +326,7 @@ func (q *Queries) ListProductVariantsByProductIDs(ctx context.Context, productId
 			&i.Price,
 			&i.DiscountPercent,
 			&i.Stock,
+			&i.SalePrice,
 		); err != nil {
 			return nil, err
 		}
@@ -321,9 +342,11 @@ func (q *Queries) ListProductVariantsByProductIDs(ctx context.Context, productId
 }
 
 const listProductsByCategory = `-- name: ListProductsByCategory :many
-SELECT p.id, p.seller_id, p.category_id, p.name, p.description, p.created_at, p.brand_id, p.is_featured, b.name AS brand_name, b.is_verified AS brand_verified
+SELECT p.id, p.seller_id, p.category_id, p.name, p.description, p.created_at, p.brand_id, p.is_featured, b.name AS brand_name, b.is_verified AS brand_verified,
+       COALESCE(c.name, '') AS category_name
 FROM products p
 LEFT JOIN brands b ON p.brand_id = b.id
+LEFT JOIN categories c ON c.id = p.category_id
 WHERE p.category_id = $1
 ORDER BY p.id
 `
@@ -339,6 +362,7 @@ type ListProductsByCategoryRow struct {
 	IsFeatured    bool           `json:"is_featured"`
 	BrandName     sql.NullString `json:"brand_name"`
 	BrandVerified sql.NullBool   `json:"brand_verified"`
+	CategoryName  string         `json:"category_name"`
 }
 
 func (q *Queries) ListProductsByCategory(ctx context.Context, categoryID sql.NullInt32) ([]ListProductsByCategoryRow, error) {
@@ -361,6 +385,60 @@ func (q *Queries) ListProductsByCategory(ctx context.Context, categoryID sql.Nul
 			&i.IsFeatured,
 			&i.BrandName,
 			&i.BrandVerified,
+			&i.CategoryName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSellerProducts = `-- name: ListSellerProducts :many
+SELECT p.id, p.name, p.description, p.is_featured,
+       COALESCE(b.name, '') AS brand_name,
+       COALESCE(b.is_verified, false) AS brand_verified,
+       COALESCE(c.name, '') AS category_name
+FROM products p
+LEFT JOIN brands b ON b.id = p.brand_id
+LEFT JOIN categories c ON c.id = p.category_id
+WHERE p.seller_id = $1
+ORDER BY p.id DESC
+`
+
+type ListSellerProductsRow struct {
+	ID            int32          `json:"id"`
+	Name          string         `json:"name"`
+	Description   sql.NullString `json:"description"`
+	IsFeatured    bool           `json:"is_featured"`
+	BrandName     string         `json:"brand_name"`
+	BrandVerified bool           `json:"brand_verified"`
+	CategoryName  string         `json:"category_name"`
+}
+
+func (q *Queries) ListSellerProducts(ctx context.Context, sellerID sql.NullInt32) ([]ListSellerProductsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listSellerProducts, sellerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListSellerProductsRow
+	for rows.Next() {
+		var i ListSellerProductsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.IsFeatured,
+			&i.BrandName,
+			&i.BrandVerified,
+			&i.CategoryName,
 		); err != nil {
 			return nil, err
 		}

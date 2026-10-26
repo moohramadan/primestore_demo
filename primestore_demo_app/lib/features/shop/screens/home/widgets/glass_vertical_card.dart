@@ -18,11 +18,9 @@ class TGlassVerticalCard extends StatelessWidget {
     final variant = product.defaultVariant;
     final imageUrl = product.mainImageUrl;
 
-    final price = variant?.price ?? 0;
+    final price = variant?.effectivePrice ?? 0;
     final discountPercent = variant?.discountPercent ?? 0;
-    final originalPrice = discountPercent > 0
-        ? price / (1 - discountPercent / 100)
-        : price;
+    final originalPrice = variant?.price ?? price;
 
     return Stack(
       children: [
@@ -75,11 +73,11 @@ class TGlassVerticalCard extends StatelessWidget {
                           const SizedBox(width: TSizes.xs),
                           Row(
                             children: [
-                              TProductPriceText(price: price.toStringAsFixed(0), isLarge: false),
-                              if (discountPercent > 0) ...[
+                              TProductPriceText(price: price.toStringAsFixed(2), isLarge: false),
+                              if (variant?.isOnSale ?? false) ...[
                                 const SizedBox(width: 10),
                                 Text(
-                                  '\$${originalPrice.toStringAsFixed(0)}',
+                                  '\$${originalPrice.toStringAsFixed(2)}',
                                   style: Theme.of(context).textTheme.titleSmall!.apply(
                                         decoration: TextDecoration.lineThrough,
                                       ),
@@ -118,4 +116,3 @@ class TGlassVerticalCard extends StatelessWidget {
     );
   }
 }
-

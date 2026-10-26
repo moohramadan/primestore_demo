@@ -178,15 +178,6 @@ class ProductInfoContainer extends StatelessWidget {
             children: [
               Expanded(
                 child: TRoundedElevatedButton(
-                  onPressed: () {},
-                  text: 'Draft',
-                  color: TColors.dark,
-                ),
-              ),
-              SizedBox(width: TSizes.xs),
-              Expanded(
-                flex: 2,
-                child: TRoundedElevatedButton(
                   onPressed: () => onSave(),
                   text: 'Save',
                   isLoading: isSaving,

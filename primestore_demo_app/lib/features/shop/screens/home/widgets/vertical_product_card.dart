@@ -16,11 +16,9 @@ class TVerticalProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final variant = product.defaultVariant;
     final imageUrl = product.mainImageUrl;
-    final price = variant?.price ?? 0;
+    final price = variant?.effectivePrice ?? 0;
     final discountPercent = variant?.discountPercent ?? 0;
-    final originalPrice = discountPercent > 0
-        ? price / (1 - discountPercent / 100)
-        : price;
+    final originalPrice = variant?.price ?? price;
     final borderRadius = BorderRadius.circular(TSizes.borderRadiusMd);
 
     return Stack(
@@ -87,13 +85,13 @@ class TVerticalProductCard extends StatelessWidget {
                       Row(
                         children: [
                           TProductPriceText(
-                            price: price.toStringAsFixed(0),
+                            price: price.toStringAsFixed(2),
                             isLarge: false,
                           ),
-                          if (discountPercent > 0) ...[
+                          if (variant?.isOnSale ?? false) ...[
                             const SizedBox(width: 10),
                             Text(
-                              '\$${originalPrice.toStringAsFixed(0)}',
+                              '\$${originalPrice.toStringAsFixed(2)}',
                               style: Theme.of(context).textTheme.titleSmall!
                                   .apply(
                                     decoration: TextDecoration.lineThrough,
@@ -119,7 +117,12 @@ class TVerticalProductCard extends StatelessWidget {
                 color: Colors.amberAccent,
               ),
               padding: const EdgeInsets.all(7),
-              child: Text('$discountPercent%', style: Theme.of(context).textTheme.titleSmall!.apply(color: TColors.black),),
+              child: Text(
+                '$discountPercent%',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall!.apply(color: TColors.black),
+              ),
             ),
           ),
         Positioned(

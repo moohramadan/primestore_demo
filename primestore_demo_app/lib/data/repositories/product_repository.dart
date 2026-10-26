@@ -1,11 +1,38 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:demo_project/data/repositories/authenticated_http_client.dart';
 import 'package:demo_project/utils/constants/api_constants.dart';
-import 'package:demo_project/utils/local_storage/secure_storage_service.dart';
+import 'package:demo_project/features/shop/models/product_model.dart';
 import 'package:http/http.dart' as http;
 
 class ProductRepository {
+  final AuthenticatedHttpClient _authenticatedClient =
+      AuthenticatedHttpClient();
+
+  Future<List<ProductModel>> fetchSellerProducts() async {
+    final response = await _authenticatedClient.send(
+      (accessToken) => http.get(
+        Uri.parse('${ApiConstants.baseUrl}/seller/products'),
+        headers: {'Authorization': 'Bearer $accessToken'},
+      ),
+    );
+    if (response.statusCode != 200) {
+      throw _responseError(response, 'Could not load your products');
+    }
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) {
+      throw const FormatException('The server returned invalid products.');
+    }
+    return decoded.map((item) {
+      if (item is! Map<String, dynamic>) {
+        throw const FormatException('The server returned invalid products.');
+      }
+      return ProductModel.fromJson(item);
+    }).toList();
+  }
+
   Future<List<ProductOption>> fetchCategories() async {
     final response = await http.get(
       Uri.parse('${ApiConstants.baseUrl}/categories'),
@@ -36,6 +63,26 @@ class ProductRepository {
         .toList();
   }
 
+  Future<List<ProductModel>> fetchProductsByCategory(int categoryId) async {
+    final response = await http.get(
+      Uri.parse('${ApiConstants.baseUrl}/products/category/$categoryId'),
+    );
+    if (response.statusCode != 200) {
+      throw _responseError(response, 'Could not load products for category');
+    }
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) {
+      throw const FormatException('The server returned invalid products.');
+    }
+    return decoded.map((item) {
+      if (item is! Map<String, dynamic>) {
+        throw const FormatException('The server returned invalid products.');
+      }
+      return ProductModel.fromJson(item);
+    }).toList();
+  }
+
   Future<List<ProductOption>> fetchBrands() async {
     final response = await http.get(
       Uri.parse('${ApiConstants.baseUrl}/brands'),
@@ -61,13 +108,19 @@ class ProductRepository {
     }).toList();
   }
 
-  Future<List<String>> uploadProductImages(List<Uint8List> images) async {
+  Future<List<String>> uploadProductImages(
+    List<Uint8List> images, {
+    List<String> existingPaths = const [],
+    void Function(List<String> paths)? onPathsUpdated,
+  }) async {
     if (images.isEmpty || images.length > 5) {
       throw ArgumentError('Select between 1 and 5 product images.');
     }
+    if (existingPaths.length > images.length) {
+      throw ArgumentError('Uploaded image paths do not match selected images.');
+    }
 
-    final accessToken = await _accessToken();
-    final files = images.map((bytes) {
+    final files = images.skip(existingPaths.length).map((bytes) {
       final contentType = _imageContentType(bytes);
       if (bytes.isEmpty || bytes.length > 5 * 1024 * 1024) {
         throw ArgumentError('Each image must be between 1 byte and 5 MB.');
@@ -75,27 +128,39 @@ class ProductRepository {
       return {'content_type': contentType, 'size': bytes.length};
     }).toList();
 
-    final response = await http.post(
-      Uri.parse('${ApiConstants.baseUrl}/seller/products/upload-urls'),
-      headers: {
-        'Authorization': 'Bearer $accessToken',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({'files': files}),
-    );
-    if (response.statusCode != 200) {
-      throw _responseError(response, 'Could not prepare image uploads');
+    var uploads = const <dynamic>[];
+    if (files.isNotEmpty) {
+      final response = await _authenticatedClient.send(
+        (accessToken) => http.post(
+          Uri.parse('${ApiConstants.baseUrl}/seller/products/upload-urls'),
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'files': files}),
+        ),
+      );
+      if (response.statusCode != 200) {
+        throw _responseError(response, 'Could not prepare image uploads');
+      }
+
+      final decoded = _decodeObject(
+        response,
+        'Could not prepare image uploads',
+      );
+      final responseUploads = decoded['uploads'];
+      if (responseUploads is! List || responseUploads.length != files.length) {
+        throw const FormatException(
+          'The server returned invalid upload URLs.',
+        );
+      }
+      uploads = responseUploads;
     }
 
-    final decoded = _decodeObject(response, 'Could not prepare image uploads');
-    final uploads = decoded['uploads'];
-    if (uploads is! List || uploads.length != images.length) {
-      throw const FormatException('The server returned invalid upload URLs.');
-    }
-
-    final paths = <String>[];
-    for (var i = 0; i < images.length; i++) {
-      final upload = uploads[i];
+    final paths = List<String>.of(existingPaths);
+    for (var uploadIndex = 0; uploadIndex < uploads.length; uploadIndex++) {
+      final imageIndex = paths.length;
+      final upload = uploads[uploadIndex];
       if (upload is! Map<String, dynamic> ||
           upload['path'] is! String ||
           upload['upload_url'] is! String ||
@@ -111,39 +176,49 @@ class ProductRepository {
       final putResponse = await http.put(
         Uri.parse(upload['upload_url'] as String),
         headers: headers,
-        body: images[i],
+        body: images[imageIndex],
       );
       if (putResponse.statusCode < 200 || putResponse.statusCode >= 300) {
         throw Exception(
-          'Image upload failed (${putResponse.statusCode}). Check the bucket CORS and upload configuration.',
+          'Image upload failed (${putResponse.statusCode}). Please try again.',
         );
       }
       paths.add(upload['path'] as String);
+      onPathsUpdated?.call(List<String>.unmodifiable(paths));
     }
     return paths;
   }
 
+  Future<void> deleteUnusedProductImage(String path) async {
+    final response = await _authenticatedClient.send(
+      (accessToken) => http.post(
+        Uri.parse('${ApiConstants.baseUrl}/seller/products/upload-cleanup'),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'path': path}),
+      ),
+    );
+    if (response.statusCode != 204) {
+      throw _responseError(response, 'Could not remove uploaded image');
+    }
+  }
+
   Future<void> createProduct(Map<String, dynamic> payload) async {
-    final accessToken = await _accessToken();
-    final response = await http.post(
-      Uri.parse('${ApiConstants.baseUrl}/seller/products'),
-      headers: {
-        'Authorization': 'Bearer $accessToken',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(payload),
+    final response = await _authenticatedClient.send(
+      (accessToken) => http.post(
+        Uri.parse('${ApiConstants.baseUrl}/seller/products'),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(payload),
+      ),
     );
     if (response.statusCode != 201) {
       throw _responseError(response, 'Could not create product');
     }
-  }
-
-  Future<String> _accessToken() async {
-    final token = await SecureStorageService.getAccessToken();
-    if (token == null || token.isEmpty) {
-      throw StateError('Please sign in before uploading product images.');
-    }
-    return token;
   }
 
   String _imageContentType(Uint8List bytes) {

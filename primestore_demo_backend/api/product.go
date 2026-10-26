@@ -4,8 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
-
-	//db "primestore_demo_backend/db/sqlc"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,12 +16,13 @@ type categoryResponse struct {
 }
 
 type variantResponse struct {
-	ID              int64  `json:"id"`
-	Color           string `json:"color"`
-	Size            string `json:"size"`
-	Price           string `json:"price"`
-	DiscountPercent int32  `json:"discount_percent"`
-	Stock           int32  `json:"stock"`
+	ID              int64   `json:"id"`
+	Color           string  `json:"color"`
+	Size            string  `json:"size"`
+	Price           string  `json:"price"`
+	SalePrice       *string `json:"sale_price"`
+	DiscountPercent int32   `json:"discount_percent"`
+	Stock           int32   `json:"stock"`
 }
 
 type imageResponse struct {
@@ -35,6 +35,7 @@ type productResponse struct {
 	ID            int64             `json:"id"`
 	Name          string            `json:"name"`
 	Description   string            `json:"description"`
+	CategoryName  string            `json:"category_name"`
 	IsFeatured    bool              `json:"is_featured"`
 	BrandName     string            `json:"brand_name"`
 	BrandVerified bool              `json:"brand_verified"`
@@ -73,6 +74,7 @@ func (server *Server) listFeaturedProducts(ctx *gin.Context) {
 			ID:            p.ID,
 			Name:          p.Name,
 			Description:   p.Description,
+			CategoryName:  p.CategoryName,
 			IsFeatured:    p.IsFeatured,
 			BrandName:     p.BrandName,
 			BrandVerified: p.BrandVerified,
@@ -88,10 +90,48 @@ func (server *Server) listFeaturedProducts(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
+func (server *Server) listProductsByCategory(ctx *gin.Context) {
+	categoryID, err := strconv.ParseInt(ctx.Param("id"), 10, 32)
+	if err != nil || categoryID <= 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid category id"})
+		return
+	}
+
+	products, err := server.store.ListProductsByCategory(ctx, sql.NullInt32{
+		Int32: int32(categoryID),
+		Valid: true,
+	})
+	if err != nil {
+		internalError(ctx, err, "could not fetch products")
+		return
+	}
+
+	bases := make([]productBase, len(products))
+	for i, product := range products {
+		bases[i] = productBase{
+			ID:            product.ID,
+			Name:          product.Name,
+			Description:   product.Description,
+			CategoryName:  product.CategoryName,
+			IsFeatured:    product.IsFeatured,
+			BrandName:     product.BrandName,
+			BrandVerified: product.BrandVerified,
+		}
+	}
+
+	res, err := server.buildProductResponses(ctx, bases)
+	if err != nil {
+		internalError(ctx, err, "could not fetch products")
+		return
+	}
+	ctx.JSON(http.StatusOK, res)
+}
+
 type productBase struct {
 	ID            int32
 	Name          string
 	Description   sql.NullString
+	CategoryName  string
 	IsFeatured    bool
 	BrandName     sql.NullString
 	BrandVerified sql.NullBool
@@ -121,18 +161,24 @@ func (server *Server) buildProductResponses(ctx context.Context, bases []product
 	for _, img := range images {
 		imagesByProduct[img.ProductID] = append(imagesByProduct[img.ProductID], imageResponse{
 			ID:        int64(img.ID),
-			ImageURL:  img.ImageUrl,
+			ImageURL:  server.images.PublicURL(img.ImageUrl),
 			SortOrder: img.SortOrder,
 		})
 	}
 
 	variantsByProduct := make(map[int32][]variantResponse)
 	for _, v := range variants {
+		var salePrice *string
+		if v.SalePrice.Valid {
+			value := v.SalePrice.String
+			salePrice = &value
+		}
 		variantsByProduct[v.ProductID] = append(variantsByProduct[v.ProductID], variantResponse{
 			ID:              int64(v.ID),
 			Color:           v.Color.String,
 			Size:            v.Size.String,
 			Price:           v.Price,
+			SalePrice:       salePrice,
 			DiscountPercent: v.DiscountPercent,
 			Stock:           v.Stock,
 		})
@@ -152,6 +198,7 @@ func (server *Server) buildProductResponses(ctx context.Context, bases []product
 			ID:            int64(b.ID),
 			Name:          b.Name,
 			Description:   b.Description.String,
+			CategoryName:  b.CategoryName,
 			IsFeatured:    b.IsFeatured,
 			BrandName:     b.BrandName.String,
 			BrandVerified: b.BrandVerified.Bool,
