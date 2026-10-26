@@ -16,6 +16,7 @@ class TRoundedElevatedButton extends StatelessWidget {
     this.borderRadius,
     this.borderColor,
     this.elevation,
+    this.isLoading = false,
   });
 
   final Color color;
@@ -29,6 +30,7 @@ class TRoundedElevatedButton extends StatelessWidget {
   final double? borderRadius;
   final Color? borderColor;
   final double? elevation;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +44,31 @@ class TRoundedElevatedButton extends StatelessWidget {
           ),
     );
 
-    final buttonChild = icon == null
+    final buttonChild = isLoading
+        ? Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(TColors.white),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Saving...',
+                style:
+                    textStyle ??
+                    Theme.of(context).textTheme.headlineSmall!.apply(
+                      color: TColors.white,
+                      fontWeightDelta: 28,
+                    ),
+              ),
+            ],
+          )
+        : icon == null
         ? buttonText
         : SizedBox(
             width: width ?? double.infinity,
@@ -60,7 +86,7 @@ class TRoundedElevatedButton extends StatelessWidget {
       width: width,
       height: height,
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           padding:

@@ -12,6 +12,83 @@ import (
 	"github.com/lib/pq"
 )
 
+const createProduct = `-- name: CreateProduct :one
+INSERT INTO products (seller_id, category_id, brand_id, name, description)
+VALUES ($1, $2, $3, $4, $5) RETURNING id, seller_id, category_id, name, description, created_at, brand_id, is_featured
+`
+
+type CreateProductParams struct {
+	SellerID    sql.NullInt32  `json:"seller_id"`
+	CategoryID  sql.NullInt32  `json:"category_id"`
+	BrandID     sql.NullInt32  `json:"brand_id"`
+	Name        string         `json:"name"`
+	Description sql.NullString `json:"description"`
+}
+
+func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
+	row := q.db.QueryRowContext(ctx, createProduct,
+		arg.SellerID,
+		arg.CategoryID,
+		arg.BrandID,
+		arg.Name,
+		arg.Description,
+	)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.SellerID,
+		&i.CategoryID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.BrandID,
+		&i.IsFeatured,
+	)
+	return i, err
+}
+
+const createProductImage = `-- name: CreateProductImage :exec
+INSERT INTO product_images (product_id, image_url, sort_order)
+VALUES ($1, $2, $3)
+`
+
+type CreateProductImageParams struct {
+	ProductID int32  `json:"product_id"`
+	ImageUrl  string `json:"image_url"`
+	SortOrder int32  `json:"sort_order"`
+}
+
+func (q *Queries) CreateProductImage(ctx context.Context, arg CreateProductImageParams) error {
+	_, err := q.db.ExecContext(ctx, createProductImage, arg.ProductID, arg.ImageUrl, arg.SortOrder)
+	return err
+}
+
+const createProductVariant = `-- name: CreateProductVariant :exec
+INSERT INTO product_variants (product_id, color, size, price, discount_percent, stock)
+VALUES ($1, $2, $3, $4, $5, $6)
+`
+
+type CreateProductVariantParams struct {
+	ProductID       int32          `json:"product_id"`
+	Color           sql.NullString `json:"color"`
+	Size            sql.NullString `json:"size"`
+	Price           string         `json:"price"`
+	DiscountPercent int32          `json:"discount_percent"`
+	Stock           int32          `json:"stock"`
+}
+
+func (q *Queries) CreateProductVariant(ctx context.Context, arg CreateProductVariantParams) error {
+	_, err := q.db.ExecContext(ctx, createProductVariant,
+		arg.ProductID,
+		arg.Color,
+		arg.Size,
+		arg.Price,
+		arg.DiscountPercent,
+		arg.Stock,
+	)
+	return err
+}
+
 const getProduct = `-- name: GetProduct :one
 SELECT p.id, p.seller_id, p.category_id, p.name, p.description, p.created_at, p.brand_id, p.is_featured, b.name AS brand_name, b.is_verified AS brand_verified
 FROM products p

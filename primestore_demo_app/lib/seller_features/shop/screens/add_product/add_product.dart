@@ -1,10 +1,13 @@
 import 'dart:typed_data';
 
 import 'package:demo_project/common/widgets/texts/section_heading.dart';
+import 'package:demo_project/data/repositories/product_repository.dart';
+import 'package:demo_project/seller_features/autentication/controllers/add_product_controller.dart';
 import 'package:demo_project/seller_features/shop/screens/add_product/widgets/product_info.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/helpers/helper_functions.dart';
+import 'package:demo_project/utils/popups/loaders.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
@@ -20,8 +23,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
   static const int _maxPhotos = 5;
 
   final ImagePicker _imagePicker = ImagePicker();
+  final ProductRepository _productRepository = ProductRepository();
   final List<Uint8List> _photos = [];
   bool _isPickingPhoto = false;
+  bool _isSavingProduct = false;
 
   Future<void> _pickPhoto() async {
     if (_isPickingPhoto) return;
@@ -57,6 +62,46 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   void _removePhoto(int index) {
     setState(() => _photos.removeAt(index));
+  }
+
+  Future<void> _saveProduct() async {
+    if (_isSavingProduct) return;
+    final controller = addProductController;
+    if (controller.isLoadingProductOptions.value ||
+        controller.productOptionsError.value != null ||
+        controller.selectedCategoryId.value == null) {
+      TLoaders.errorSnackBar(
+        title: 'Cannot save product',
+        message: 'Wait for categories and brands to load before saving.',
+      );
+      return;
+    }
+    if (_photos.isEmpty) {
+      TLoaders.errorSnackBar(
+        title: 'Cannot save product',
+        message: 'Add at least one product photo.',
+      );
+      return;
+    }
+
+    setState(() => _isSavingProduct = true);
+    try {
+      final imagePaths = await _productRepository.uploadProductImages(_photos);
+      await controller.submitProduct(imagePaths: imagePaths);
+      if (!mounted) return;
+      TLoaders.successSnackBar(
+        title: 'Product added',
+        message: 'Your product was created successfully.',
+      );
+    } catch (error) {
+      if (!mounted) return;
+      TLoaders.errorSnackBar(
+        title: 'Could not add product',
+        message: error.toString(),
+      );
+    } finally {
+      if (mounted) setState(() => _isSavingProduct = false);
+    }
   }
 
   @override
@@ -97,7 +142,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
               const SizedBox(height: TSizes.spaceBtwInputFields),
               TSectionHeading(title: 'Product Info', showActionButton: false),
               const SizedBox(height: TSizes.spaceBtwInputFields),
-              ProductInfoContainer(),
+              ProductInfoContainer(
+                onSave: _saveProduct,
+                isSaving: _isSavingProduct,
+              ),
             ],
           ),
         ),

@@ -16,12 +16,14 @@ type Server struct {
 	mailer         *util.Mailer
 	googleClientID string
 	router         *gin.Engine
+	images *util.ImageStorage
 }
 
-func NewServer(store db.Queries, conn *sql.DB, tokenMaker *util.TokenMaker, mailer *util.Mailer, googleClientID string) *Server {
+func NewServer(store db.Queries, conn *sql.DB, tokenMaker *util.TokenMaker, mailer *util.Mailer, googleClientID string, images *util.ImageStorage) *Server {
 	server := &Server{
 		store:          store,
 		conn:           conn,
+		images:         images,
 		tokenMaker:     tokenMaker,
 		mailer:         mailer,
 		googleClientID: googleClientID,
@@ -57,6 +59,12 @@ func NewServer(store db.Queries, conn *sql.DB, tokenMaker *util.TokenMaker, mail
 	sellerLimiter := NewRateLimiter(3, 15*time.Minute)
     authRoutes.POST("/seller/profile", rateLimitMiddleware(sellerLimiter), server.createSellerProfile)
     authRoutes.GET("/seller/profile", server.getSellerProfile)
+	router.GET("/brands", server.listBrands)
+    uploadLimiter := NewRateLimiter(20, 15*time.Minute)
+    authRoutes.POST("/seller/products/upload-urls", rateLimitMiddleware(uploadLimiter), sellerOnly(server), server.createProductUploadURLs)
+    productLimiter := NewRateLimiter(20, 15*time.Minute)
+    authRoutes.POST("/seller/products", rateLimitMiddleware(productLimiter), sellerOnly(server), server.createProduct)
+
 
 	server.router = router
 	return server

@@ -34,3 +34,15 @@ SELECT * FROM product_variants
 WHERE product_id = ANY(sqlc.arg(product_ids)::int[])
 ORDER BY product_id, id;
 
+-- name: CreateProduct :one
+INSERT INTO products (seller_id, category_id, brand_id, name, description)
+VALUES ($1, $2, $3, $4, $5) RETURNING *;
+
+-- name: CreateProductImage :exec
+INSERT INTO product_images (product_id, image_url, sort_order)
+VALUES ($1, $2, $3);
+
+-- name: CreateProductVariant :exec
+INSERT INTO product_variants (product_id, color, size, price, discount_percent, stock)
+VALUES ($1, $2, $3, $4, $5, $6);
+

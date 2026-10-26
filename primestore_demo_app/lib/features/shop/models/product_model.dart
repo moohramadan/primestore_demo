@@ -1,9 +1,36 @@
+import 'package:demo_project/utils/constants/api_constants.dart';
+
 class ProductImageModel {
   final int id;
   final String imageUrl;
   final int sortOrder;
 
   ProductImageModel({required this.id, required this.imageUrl, required this.sortOrder});
+
+  String? get displayUrl {
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    if (!imageUrl.startsWith('products/')) return imageUrl;
+
+    final baseUrl = ApiConstants.s3PublicBaseUrl.trim().replaceFirst(
+      RegExp(r'/+$'),
+      '',
+    );
+    if (baseUrl.isEmpty) return null;
+
+    final encodedKey = imageUrl
+        .split('/')
+        .map(Uri.encodeComponent)
+        .join('/');
+    return '$baseUrl/$encodedKey';
+  }
+
+  bool get isNetworkImage {
+    final url = displayUrl;
+    return url != null &&
+        (url.startsWith('http://') || url.startsWith('https://'));
+  }
 
   factory ProductImageModel.fromJson(Map<String, dynamic> json) {
     return ProductImageModel(
@@ -81,5 +108,5 @@ class ProductModel {
   ProductVariantModel? get defaultVariant => variants.isNotEmpty ? variants.first : null;
 
   /// Convenience: lowest sort_order image, used as the card thumbnail
-  String? get mainImageUrl => images.isNotEmpty ? images.first.imageUrl : null;
+  String? get mainImageUrl => images.isNotEmpty ? images.first.displayUrl : null;
 }

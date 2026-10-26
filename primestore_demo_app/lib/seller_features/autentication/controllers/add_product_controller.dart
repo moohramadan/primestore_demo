@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:demo_project/data/repositories/product_repository.dart';
 
 // ---------------------------------------------------------------------
 // Category -> sizing scheme
@@ -25,46 +26,6 @@ const Map<ProductSizeType, List<String>> sizeOptionsByType = {
     'EU 41', 'EU 42', 'EU 43', 'EU 44', 'EU 45', 'EU 46',
   ],
   ProductSizeType.none: [],
-};
-
-/// category_id / brand_id lookups, in the same order as the dropdown items
-/// in product_info.dart. Replace these numbers with the real ids from your
-/// `categories` / `brands` tables — everything else in this file works off
-/// whatever ids these two maps return, so this is the only place to touch.
-const Map<String, int> categoryIds = {
-  'Sport': 1,
-  'Electronics': 2,
-  'Phones & Tablets': 3,
-  'Home & Office': 4,
-  'Fashion': 5,
-  'Health & Beauty': 6,
-  'Computing': 7,
-  'Grocery': 8,
-  'Garden & Outdoors': 9,
-  'Automotive': 10,
-  'Audio': 11,
-  'Footwear': 12,
-};
-
-const Map<String, int> brandIds = {
-  'Nike': 1,
-  'Adidas': 2,
-  'Puma': 3,
-  'Apple': 4,
-  'Samsung': 5,
-  'Sony': 6,
-  'JBL': 7,
-  'Xiaomi': 8,
-  'Huawei': 9,
-  'HP': 10,
-  'Dell': 11,
-  'Lenovo': 12,
-  'LG': 13,
-  'Reebok': 14,
-  'New Balance': 15,
-  'Under Armour': 16,
-  'Canon': 17,
-  'Bose': 18,
 };
 
 // ---------------------------------------------------------------------
@@ -113,14 +74,20 @@ AddProductController get addProductController {
 }
 
 class AddProductController extends GetxController {
+  final ProductRepository _productRepository = ProductRepository();
+  final RxList<ProductOption> categories = <ProductOption>[].obs;
+  final RxList<ProductOption> brands = <ProductOption>[].obs;
+  final RxnInt selectedCategoryId = RxnInt();
+  final RxnInt selectedBrandId = RxnInt(0);
+  final RxString selectedCategoryName = ''.obs;
+  final RxBool isLoadingProductOptions = true.obs;
+  final RxnString productOptionsError = RxnString();
+
   // ---- product-level text fields ----
   final TextEditingController nameController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController originalPriceController = TextEditingController();
   final TextEditingController salePriceController = TextEditingController();
-
-  final RxString selectedCategory = 'Sport'.obs;
-  final RxString selectedBrand = 'Nike'.obs;
 
   // ---- variant selection ----
   final RxList<String> selectedColors = <String>[].obs;
@@ -132,7 +99,7 @@ class AddProductController extends GetxController {
       <String, TextEditingController>{}.obs;
 
   ProductSizeType get sizeType =>
-      categorySizeTypeMap[selectedCategory.value] ?? ProductSizeType.none;
+      categorySizeTypeMap[selectedCategoryName.value] ?? ProductSizeType.none;
 
   List<String> get availableSizes => sizeOptionsByType[sizeType]!;
 
@@ -141,16 +108,53 @@ class AddProductController extends GetxController {
   String _key(String color, String size) =>
       size.isEmpty ? color : '$color::$size';
 
-  void setCategory(String category) {
-    if (selectedCategory.value == category) return;
-    selectedCategory.value = category;
+  @override
+  void onInit() {
+    super.onInit();
+    loadProductOptions();
+  }
+
+  Future<void> loadProductOptions() async {
+    isLoadingProductOptions.value = true;
+    productOptionsError.value = null;
+    try {
+      final results = await Future.wait<List<ProductOption>>([
+        _productRepository.fetchCategories(),
+        _productRepository.fetchBrands(),
+      ]);
+      categories.assignAll(results[0]);
+      brands.assignAll(results[1]);
+      if (categories.isEmpty) {
+        throw StateError('Add at least one product category to the database.');
+      }
+      final selectedCategory = categories.where(
+        (category) => category.id == selectedCategoryId.value,
+      );
+      if (selectedCategory.isEmpty) {
+        selectedCategoryId.value = categories.first.id;
+      }
+      selectedCategoryName.value = categories
+          .firstWhere((category) => category.id == selectedCategoryId.value)
+          .name;
+    } catch (error) {
+      productOptionsError.value = error.toString();
+    } finally {
+      isLoadingProductOptions.value = false;
+    }
+  }
+
+  void setCategory(int categoryId) {
+    final category = categories.firstWhere((item) => item.id == categoryId);
+    if (selectedCategoryId.value == categoryId) return;
+    selectedCategoryId.value = categoryId;
+    selectedCategoryName.value = category.name;
     // Drop any picked size that doesn't belong to the new scheme, e.g.
     // switching from Footwear to Fashion drops 'EU 42'.
     selectedSizes.removeWhere((s) => !availableSizes.contains(s));
     _syncStockControllers();
   }
 
-  void setBrand(String brand) => selectedBrand.value = brand;
+  void setBrand(int? brandId) => selectedBrandId.value = brandId;
 
   void addColor(String color) {
     if (selectedColors.contains(color)) return;
@@ -221,51 +225,38 @@ class AddProductController extends GetxController {
     }).toList();
   }
 
-  /// Full payload for the create-product endpoint. Shape mirrors the
-  /// `products` / `product_variants` / `product_images` tables, so the
-  /// backend side of this is just inserting it.
   Map<String, dynamic> buildProductPayload({
     required double price,
     required double discountPercent,
-    List<String> imageUrls = const [],
+    required List<String> imagePaths,
   }) {
     return {
       'name': nameController.text.trim(),
       'description': descriptionController.text.trim(),
-      'category_id': categoryIds[selectedCategory.value] ?? 0,
-      'brand_id': brandIds[selectedBrand.value] ?? 0,
+      'category_id': selectedCategoryId.value ?? 0,
+      'brand_id': selectedBrandId.value ?? 0,
+      'original_price': originalPriceController.text.trim(),
+      'sale_price': salePriceController.text.trim(),
+      'image_paths': imagePaths,
       'variants': buildVariants(price: price, discountPercent: discountPercent)
           .map((v) => v.toJson())
           .toList(),
-      'images': [
-        for (var i = 0; i < imageUrls.length; i++)
-          {'image_url': imageUrls[i], 'sort_order': i},
-      ],
     };
   }
 
-  /// Replace this with your real API call (an http/dio POST to your Go
-  /// backend's create-product route). It's a plain function field so
-  /// wiring it up is a one-line change, not a rewrite of this controller:
-  ///
-  ///   addProductController.onSubmit = (payload) async {
-  ///     await dio.post('/products', data: payload);
-  ///   };
-  Future<void> Function(Map<String, dynamic> payload) onSubmit =
-      (payload) async => debugPrint('Product payload: $payload');
-
-  Future<void> submitProduct({List<String> imageUrls = const []}) {
+  Future<void> submitProduct({required List<String> imagePaths}) async {
     final price = double.tryParse(originalPriceController.text.trim()) ?? 0;
     final salePrice = double.tryParse(salePriceController.text.trim());
     final discountPercent = (salePrice != null && salePrice > 0 && price > 0)
        ? ((price - salePrice) / price * 100).clamp(0, 100).toDouble()
         : 0.0;
 
-    return onSubmit(buildProductPayload(
+    final payload = buildProductPayload(
       price: price,
       discountPercent: discountPercent,
-      imageUrls: imageUrls,
-    ));
+      imagePaths: imagePaths,
+    );
+    await _productRepository.createProduct(payload);
   }
 
   @override

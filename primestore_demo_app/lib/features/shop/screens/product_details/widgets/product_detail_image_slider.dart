@@ -1,4 +1,3 @@
-
 import 'package:demo_project/common/widgets/appbar/appbar.dart';
 import 'package:demo_project/common/widgets/custom_shapes/curved_edges/curved_edges_widget.dart';
 import 'package:demo_project/common/widgets/icons/wislist_icon.dart';
@@ -22,15 +21,19 @@ class ProductImageController extends GetxController {
 }
 
 class TProductImageSlider extends StatelessWidget {
-  const TProductImageSlider({super.key, required this.images, required this.product});
+  const TProductImageSlider({
+    super.key,
+    required this.images,
+    required this.product,
+  });
 
   final List<ProductImageModel> images;
-   final ProductModel product;
+  final ProductModel product;
   @override
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
     final controller = Get.put(ProductImageController());
-    
+
     return TCurvedEdgesWidget(
       child: Container(
         color: dark ? TColors.white : TColors.light,
@@ -46,8 +49,12 @@ class TProductImageSlider extends StatelessWidget {
                     if (images.isEmpty) {
                       return const Icon(Iconsax.gallery_slash, size: 64);
                     }
-                    final url = images[controller.selectedIndex.value].imageUrl;
-                    return url.startsWith('http')
+                    final image = images[controller.selectedIndex.value];
+                    final url = image.displayUrl;
+                    if (url == null) {
+                      return const Icon(Iconsax.gallery_slash, size: 64);
+                    }
+                    return image.isNetworkImage
                         ? Image.network(url)
                         : Image.asset(url);
                   }),
@@ -67,27 +74,32 @@ class TProductImageSlider extends StatelessWidget {
                   shrinkWrap: true,
                   scrollDirection: Axis.horizontal,
                   physics: const AlwaysScrollableScrollPhysics(),
-                  separatorBuilder: (context, index) => const SizedBox(width: TSizes.spaceBtwItems),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: TSizes.spaceBtwItems),
                   itemBuilder: (_, index) => GestureDetector(
-  onTap: () => controller.selectImage(index),
-  child: TRoundedImage(
-    width: 80,
-    backgroundColor: dark ? TColors.white : TColors.white,
-    border: Border.all(color: TColors.darkerGrey),
-    padding: const EdgeInsets.all(TSizes.sm),
-    imageUrl: images[index].imageUrl,
-    isNetworkImage: images[index].imageUrl.startsWith('http'),
-  ),
-),
-
+                    onTap: () => controller.selectImage(index),
+                    child: images[index].displayUrl == null
+                        ? const SizedBox(
+                            width: 80,
+                            child: Icon(Iconsax.gallery_slash),
+                          )
+                        : TRoundedImage(
+                            width: 80,
+                            backgroundColor: dark
+                                ? TColors.white
+                                : TColors.white,
+                            border: Border.all(color: TColors.darkerGrey),
+                            padding: const EdgeInsets.all(TSizes.sm),
+                            imageUrl: images[index].displayUrl!,
+                            isNetworkImage: images[index].isNetworkImage,
+                          ),
+                  ),
                 ),
               ),
             ),
             TAppBar(
               showBackArrow: true,
-              actions: [
-                WishlistIconButton(product: product, size: 26,),
-              ],
+              actions: [WishlistIconButton(product: product, size: 26)],
             ),
           ],
         ),
