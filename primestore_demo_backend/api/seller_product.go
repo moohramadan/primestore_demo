@@ -51,6 +51,8 @@ func (server *Server) listSellerProducts(ctx *gin.Context) {
 	for i, row := range rows {
 		bases[i] = productBase{
 			ID:            row.ID,
+			CategoryID:    row.CategoryID,
+			BrandID:       row.BrandID,
 			Name:          row.Name,
 			Description:   row.Description,
 			CategoryName:  row.CategoryName,
@@ -179,6 +181,23 @@ type createProductRequest struct {
 	Variants      []productVariantInput `json:"variants" binding:"required,min=1,max=100,dive"`
 }
 
+type updateProductVariantInput struct {
+	ID        int32  `json:"id" binding:"required,min=1"`
+	Color     string `json:"color" binding:"max=50"`
+	Size      string `json:"size" binding:"max=20"`
+	Price     string `json:"price" binding:"required"`
+	SalePrice string `json:"sale_price"`
+	Stock     int32  `json:"stock" binding:"min=0,max=1000000"`
+}
+
+type updateSellerProductRequest struct {
+	Name        string                      `json:"name" binding:"required,max=150"`
+	Description string                      `json:"description"`
+	CategoryID  int32                       `json:"category_id" binding:"required,min=1"`
+	BrandID     int32                       `json:"brand_id"`
+	Variants    []updateProductVariantInput `json:"variants" binding:"required,min=1,max=100,dive"`
+}
+
 var moneyPattern = regexp.MustCompile(`^\d{1,8}(\.\d{1,2})?$`)
 
 // parseMoney turns "1500" or "1500.5" into whole cents without using floats.
@@ -198,6 +217,65 @@ func formatCents(c int64) string {
 	return fmt.Sprintf("%d.%02d", c/100, c%100)
 }
 
+// priceInput is a validated original price and optional sale price, in cents.
+type priceInput struct {
+	Original int64
+	Sale     int64
+	HasSale  bool
+}
+
+var (
+	errInvalidPrice     = errors.New("price must be a positive amount with up to 2 decimals")
+	errInvalidSalePrice = errors.New("sale price must be a positive amount with up to 2 decimals")
+	errSaleAbovePrice   = errors.New("sale price cannot be higher than the original price")
+)
+
+// parsePrices validates an original price and an optional sale price.
+// An empty (or whitespace-only) sale price means "no sale".
+func parsePrices(originalRaw, saleRaw string) (priceInput, error) {
+	original, ok := parseMoney(originalRaw)
+	if !ok || original <= 0 {
+		return priceInput{}, errInvalidPrice
+	}
+	prices := priceInput{Original: original}
+	if strings.TrimSpace(saleRaw) == "" {
+		return prices, nil
+	}
+	sale, ok := parseMoney(saleRaw)
+	if !ok || sale <= 0 {
+		return priceInput{}, errInvalidSalePrice
+	}
+	if sale > original {
+		return priceInput{}, errSaleAbovePrice
+	}
+	prices.Sale = sale
+	prices.HasSale = true
+	return prices, nil
+}
+
+// percentOff returns how much cheaper sale is than original, as a whole percent
+// rounded to the nearest integer (halves round up). Returns 0 for bad input.
+func percentOff(original, sale int64) int32 {
+	if original <= 0 || sale < 0 || sale > original {
+		return 0
+	}
+	return int32(((original-sale)*100 + original/2) / original)
+}
+
+func (p priceInput) DiscountPercent() int32 {
+	if !p.HasSale {
+		return 0
+	}
+	return percentOff(p.Original, p.Sale)
+}
+
+func (p priceInput) saleNullString() sql.NullString {
+	if !p.HasSale {
+		return sql.NullString{}
+	}
+	return sql.NullString{String: formatCents(p.Sale), Valid: true}
+}
+
 func (server *Server) createProduct(ctx *gin.Context) {
 	var req createProductRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -208,26 +286,13 @@ func (server *Server) createProduct(ctx *gin.Context) {
 	profile := ctx.MustGet(sellerProfileKey).(db.SellerProfile)
 
 	// --- prices -----------------------------------------------------------
-	original, ok := parseMoney(req.OriginalPrice)
-	if !ok || original <= 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "original_price must be a positive amount with up to 2 decimals"})
+	prices, err := parsePrices(req.OriginalPrice, req.SalePrice)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	var discount int32
-	var salePrice sql.NullString
-	if strings.TrimSpace(req.SalePrice) != "" {
-		sale, ok := parseMoney(req.SalePrice)
-		if !ok || sale <= 0 {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "sale_price must be a positive amount with up to 2 decimals"})
-			return
-		}
-		if sale > original {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "sale_price cannot be higher than original_price"})
-			return
-		}
-		discount = int32(((original-sale)*100 + original/2) / original) // rounded percent off
-		salePrice = sql.NullString{String: formatCents(sale), Valid: true}
-	}
+	salePrice := prices.saleNullString()
+	discount := prices.DiscountPercent()
 
 	// --- variants ---------------------------------------------------------
 	// The unique index cannot catch duplicates when size is NULL, so check here.
@@ -306,7 +371,7 @@ func (server *Server) createProduct(ctx *gin.Context) {
 		}
 	}
 
-	price := formatCents(original)
+	price := formatCents(prices.Original)
 	for _, v := range req.Variants {
 		err := qtx.CreateProductVariant(ctx, db.CreateProductVariantParams{
 			ProductID:       product.ID,
@@ -334,14 +399,7 @@ func (server *Server) createProduct(ctx *gin.Context) {
 	row, err := server.store.GetProduct(ctx, product.ID)
 	if err == nil {
 		var res []productResponse
-		res, err = server.buildProductResponses(ctx, []productBase{{
-			ID:            row.ID,
-			Name:          row.Name,
-			Description:   row.Description,
-			IsFeatured:    row.IsFeatured,
-			BrandName:     row.BrandName,
-			BrandVerified: row.BrandVerified,
-		}})
+		res, err = server.buildProductResponses(ctx, []productBase{newProductBase(row)})
 		if err == nil && len(res) == 1 {
 			ctx.JSON(http.StatusCreated, gin.H{"product": res[0]})
 			return
@@ -349,6 +407,131 @@ func (server *Server) createProduct(ctx *gin.Context) {
 	}
 	log.Printf("product %d saved but response could not be built: %v", product.ID, err)
 	ctx.JSON(http.StatusCreated, gin.H{"product": gin.H{"id": product.ID}})
+}
+
+func (server *Server) updateSellerProduct(ctx *gin.Context) {
+	productID64, err := strconv.ParseInt(ctx.Param("id"), 10, 32)
+	if err != nil || productID64 <= 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid product id"})
+		return
+	}
+
+	var req updateSellerProductRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	req.Name = strings.TrimSpace(req.Name)
+	if req.Name == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "product name is required"})
+		return
+	}
+
+	profile := ctx.MustGet(sellerProfileKey).(db.SellerProfile)
+	productID := int32(productID64)
+	seenVariantIDs := make(map[int32]struct{}, len(req.Variants))
+	seenVariantValues := make(map[string]struct{}, len(req.Variants))
+	// Prices are parsed once during validation and reused when saving.
+	variantPrices := make([]priceInput, len(req.Variants))
+	for i := range req.Variants {
+		variant := &req.Variants[i]
+		variant.Color = strings.TrimSpace(variant.Color)
+		variant.Size = strings.TrimSpace(variant.Size)
+		if _, exists := seenVariantIDs[variant.ID]; exists {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "duplicate variant id"})
+			return
+		}
+		seenVariantIDs[variant.ID] = struct{}{}
+		key := strings.ToLower(variant.Color + "::" + variant.Size)
+		if _, exists := seenVariantValues[key]; exists {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "duplicate variant"})
+			return
+		}
+		seenVariantValues[key] = struct{}{}
+
+		prices, err := parsePrices(variant.Price, variant.SalePrice)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		variantPrices[i] = prices
+	}
+
+	tx, err := server.conn.BeginTx(ctx, nil)
+	if err != nil {
+		internalError(ctx, err, "could not update product")
+		return
+	}
+	defer tx.Rollback()
+	qtx := server.store.WithTx(tx)
+
+	productRows, err := qtx.UpdateSellerProduct(ctx, db.UpdateSellerProductParams{
+		ID:          productID,
+		SellerID:    sql.NullInt32{Int32: profile.ID, Valid: true},
+		Name:        req.Name,
+		Description: sql.NullString{String: strings.TrimSpace(req.Description), Valid: strings.TrimSpace(req.Description) != ""},
+		CategoryID:  sql.NullInt32{Int32: req.CategoryID, Valid: true},
+		BrandID:     sql.NullInt32{Int32: req.BrandID, Valid: req.BrandID > 0},
+	})
+	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23503" {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "unknown category or brand"})
+			return
+		}
+		internalError(ctx, err, "could not update product")
+		return
+	}
+	if productRows == 0 {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
+		return
+	}
+
+	for i, variant := range req.Variants {
+		prices := variantPrices[i]
+
+		rows, err := qtx.UpdateSellerProductVariant(ctx, db.UpdateSellerProductVariantParams{
+			ID:              variant.ID,
+			ProductID:       productID,
+			SellerID:        sql.NullInt32{Int32: profile.ID, Valid: true},
+			Color:           sql.NullString{String: variant.Color, Valid: variant.Color != ""},
+			Size:            sql.NullString{String: variant.Size, Valid: variant.Size != ""},
+			Price:           formatCents(prices.Original),
+			SalePrice:       prices.saleNullString(),
+			DiscountPercent: prices.DiscountPercent(),
+			Stock:           variant.Stock,
+		})
+		if err != nil {
+			var pqErr *pq.Error
+			if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+				ctx.JSON(http.StatusBadRequest, gin.H{"error": "variant color and size must be unique"})
+				return
+			}
+			internalError(ctx, err, "could not update product variants")
+			return
+		}
+		if rows != 1 {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "one or more variants do not belong to this product"})
+			return
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		internalError(ctx, err, "could not update product")
+		return
+	}
+
+	row, err := server.store.GetProduct(ctx, productID)
+	if err != nil {
+		internalError(ctx, err, "product was updated but could not be reloaded")
+		return
+	}
+	products, err := server.buildProductResponses(ctx, []productBase{newProductBase(row)})
+	if err != nil {
+		internalError(ctx, err, "product was updated but could not be reloaded")
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"product": products[0]})
 }
 
 func isSellerImagePath(path string, sellerID int32) bool {

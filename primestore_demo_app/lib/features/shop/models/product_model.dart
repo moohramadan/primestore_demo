@@ -43,6 +43,12 @@ class ProductVariantModel {
 
   double get effectivePrice => salePrice ?? price;
 
+  /// "Red · M", or "Standard" when the variant has no colour or size.
+  String get label {
+    final parts = [if (color.isNotEmpty) color, if (size.isNotEmpty) size];
+    return parts.isEmpty ? 'Standard' : parts.join(' · ');
+  }
+
   bool get isOnSale => salePrice != null && salePrice! < price;
 
   factory ProductVariantModel.fromJson(Map<String, dynamic> json) {
@@ -62,6 +68,8 @@ class ProductVariantModel {
 
 class ProductModel {
   final int id;
+  final int? categoryId;
+  final int? brandId;
   final String name;
   final String description;
   final String categoryName;
@@ -73,6 +81,8 @@ class ProductModel {
 
   ProductModel({
     required this.id,
+    this.categoryId,
+    this.brandId,
     required this.name,
     required this.description,
     this.categoryName = '',
@@ -86,6 +96,8 @@ class ProductModel {
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(
       id: json['id'],
+      categoryId: (json['category_id'] as num?)?.toInt(),
+      brandId: (json['brand_id'] as num?)?.toInt(),
       name: json['name'],
       description: json['description'] ?? '',
       categoryName: json['category_name'] ?? '',

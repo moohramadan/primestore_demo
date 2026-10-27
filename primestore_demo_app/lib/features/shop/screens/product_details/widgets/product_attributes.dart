@@ -8,12 +8,9 @@ import 'package:demo_project/features/shop/models/product_model.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/helpers/helper_functions.dart';
+import 'package:demo_project/utils/constants/currency.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_instance/src/extension_instance.dart';
-import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
-
-//import 'package:get/get_state_manager/src/rx_flutter/rx_notifier.dart';
+import 'package:get/get.dart';
 
 class TProductAttributes extends StatelessWidget {
   const TProductAttributes({super.key, required this.product});
@@ -60,7 +57,7 @@ class TProductAttributes extends StatelessWidget {
                             const SizedBox(width: TSizes.spaceBtwItems),
                             if (variant?.isOnSale ?? false) ...[
                               Text(
-                                '\$${originalPrice.toStringAsFixed(2)}',
+                                TCurrency.format(originalPrice),
                                 style: Theme.of(context).textTheme.titleSmall!
                                     .apply(
                                       decoration: TextDecoration.lineThrough,

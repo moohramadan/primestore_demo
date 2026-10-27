@@ -12,9 +12,8 @@ import 'package:demo_project/utils/constants/enums.dart';
 import 'package:demo_project/utils/constants/image_strings.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/helpers/helper_functions.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_instance/src/extension_instance.dart';
-import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+import 'package:demo_project/utils/constants/currency.dart';
+import 'package:get/get.dart';
 
 class TProductMetaData extends StatelessWidget {
   const TProductMetaData({super.key, required this.product});
@@ -53,7 +52,7 @@ class TProductMetaData extends StatelessWidget {
               ],
               if (variant?.isOnSale ?? false) ...[
                 Text(
-                  '\$${originalPrice.toStringAsFixed(2)}',
+                  TCurrency.format(originalPrice),
                   style: Theme.of(context).textTheme.titleSmall!.apply(decoration: TextDecoration.lineThrough),
                 ),
                 const SizedBox(width: TSizes.spaceBtwItems),

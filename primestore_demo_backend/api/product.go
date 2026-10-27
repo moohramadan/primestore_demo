@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
+	db "primestore_demo_backend/db/sqlc"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,6 +35,8 @@ type imageResponse struct {
 
 type productResponse struct {
 	ID            int64             `json:"id"`
+	CategoryID    *int64            `json:"category_id"`
+	BrandID       *int64            `json:"brand_id"`
 	Name          string            `json:"name"`
 	Description   string            `json:"description"`
 	CategoryName  string            `json:"category_name"`
@@ -70,15 +74,7 @@ func (server *Server) listFeaturedProducts(ctx *gin.Context) {
 
 	bases := make([]productBase, len(products))
 	for i, p := range products {
-		bases[i] = productBase{
-			ID:            p.ID,
-			Name:          p.Name,
-			Description:   p.Description,
-			CategoryName:  p.CategoryName,
-			IsFeatured:    p.IsFeatured,
-			BrandName:     p.BrandName,
-			BrandVerified: p.BrandVerified,
-		}
+		bases[i] = newProductBase(db.GetProductRow(p))
 	}
 
 	res, err := server.buildProductResponses(ctx, bases)
@@ -108,15 +104,7 @@ func (server *Server) listProductsByCategory(ctx *gin.Context) {
 
 	bases := make([]productBase, len(products))
 	for i, product := range products {
-		bases[i] = productBase{
-			ID:            product.ID,
-			Name:          product.Name,
-			Description:   product.Description,
-			CategoryName:  product.CategoryName,
-			IsFeatured:    product.IsFeatured,
-			BrandName:     product.BrandName,
-			BrandVerified: product.BrandVerified,
-		}
+		bases[i] = newProductBase(db.GetProductRow(product))
 	}
 
 	res, err := server.buildProductResponses(ctx, bases)
@@ -129,12 +117,35 @@ func (server *Server) listProductsByCategory(ctx *gin.Context) {
 
 type productBase struct {
 	ID            int32
+	CategoryID    sql.NullInt32
+	BrandID       sql.NullInt32
 	Name          string
 	Description   sql.NullString
 	CategoryName  string
 	IsFeatured    bool
 	BrandName     sql.NullString
 	BrandVerified sql.NullBool
+}
+
+// newProductBase turns a product row into a productBase.
+//
+// GetProduct, ListFeaturedProducts and ListProductsByCategory select exactly the
+// same columns, so sqlc generates three identical row structs. Go lets us convert
+// between identical structs, which means one mapper serves all three queries:
+// call newProductBase(db.GetProductRow(row)). If one of those queries ever
+// selects different columns, this conversion stops compiling and tells you.
+func newProductBase(row db.GetProductRow) productBase {
+	return productBase{
+		ID:            row.ID,
+		CategoryID:    row.CategoryID,
+		BrandID:       row.BrandID,
+		Name:          row.Name,
+		Description:   row.Description,
+		CategoryName:  row.CategoryName,
+		IsFeatured:    row.IsFeatured,
+		BrandName:     row.BrandName,
+		BrandVerified: row.BrandVerified,
+	}
 }
 
 func (server *Server) buildProductResponses(ctx context.Context, bases []productBase) ([]productResponse, error) {
@@ -196,6 +207,8 @@ func (server *Server) buildProductResponses(ctx context.Context, bases []product
 
 		res = append(res, productResponse{
 			ID:            int64(b.ID),
+			CategoryID:    nullableInt64(b.CategoryID),
+			BrandID:       nullableInt64(b.BrandID),
 			Name:          b.Name,
 			Description:   b.Description.String,
 			CategoryName:  b.CategoryName,
@@ -208,5 +221,12 @@ func (server *Server) buildProductResponses(ctx context.Context, bases []product
 	}
 
 	return res, nil
+}
 
+func nullableInt64(value sql.NullInt32) *int64 {
+	if !value.Valid {
+		return nil
+	}
+	result := int64(value.Int32)
+	return &result
 }

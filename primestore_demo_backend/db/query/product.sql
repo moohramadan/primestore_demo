@@ -17,7 +17,7 @@ WHERE p.category_id = $1
 ORDER BY p.id;
 
 -- name: ListSellerProducts :many
-SELECT p.id, p.name, p.description, p.is_featured,
+SELECT p.id, p.category_id, p.brand_id, p.name, p.description, p.is_featured,
        COALESCE(b.name, '') AS brand_name,
        COALESCE(b.is_verified, false) AS brand_verified,
        COALESCE(c.name, '') AS category_name
@@ -28,9 +28,11 @@ WHERE p.seller_id = $1
 ORDER BY p.id DESC;
 
 -- name: GetProduct :one
-SELECT p.*, b.name AS brand_name, b.is_verified AS brand_verified
+SELECT p.*, b.name AS brand_name, b.is_verified AS brand_verified,
+       COALESCE(c.name, '') AS category_name
 FROM products p
 LEFT JOIN brands b ON p.brand_id = b.id
+LEFT JOIN categories c ON p.category_id = c.id
 WHERE p.id = $1;
 
 -- name: ListProductImages :many
@@ -65,3 +67,16 @@ SELECT EXISTS (
 -- name: CreateProductVariant :exec
 INSERT INTO product_variants (product_id, color, size, price, sale_price, discount_percent, stock)
 VALUES ($1, $2, $3, $4, $5, $6, $7);
+
+-- name: UpdateSellerProduct :execrows
+UPDATE products
+SET name = $3, description = $4, category_id = $5, brand_id = $6
+WHERE id = $1 AND seller_id = $2;
+
+-- name: UpdateSellerProductVariant :execrows
+UPDATE product_variants AS v
+SET color = $4, size = $5, price = $6, sale_price = $7,
+    discount_percent = $8, stock = $9
+FROM products AS p
+WHERE v.id = $1 AND v.product_id = $2
+  AND p.id = v.product_id AND p.seller_id = $3;

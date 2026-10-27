@@ -1,21 +1,62 @@
 import 'package:demo_project/features/shop/models/product_model.dart';
+import 'package:demo_project/seller_features/shop/screens/seller_product_details/edit_seller_product.dart';
 import 'package:demo_project/utils/constants/currency.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
+import 'package:demo_project/utils/popups/loaders.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-class SellerProductDetail extends StatelessWidget {
-  const SellerProductDetail({super.key, required this.product});
+class SellerProductDetail extends StatefulWidget {
+  const SellerProductDetail({
+    super.key,
+    required this.product,
+    this.onProductChanged,
+  });
 
   final ProductModel product;
 
+  /// Called after a successful edit so the list behind this screen can update.
+  final ValueChanged<ProductModel>? onProductChanged;
+
+  @override
+  State<SellerProductDetail> createState() => _SellerProductDetailState();
+}
+
+class _SellerProductDetailState extends State<SellerProductDetail> {
+  late ProductModel _product = widget.product;
+
+  Future<void> _editProduct() async {
+    final updatedProduct = await Get.to<ProductModel>(
+      () => EditSellerProductScreen(product: _product),
+    );
+    if (updatedProduct != null && mounted) {
+      setState(() => _product = updatedProduct);
+      widget.onProductChanged?.call(updatedProduct);
+      TLoaders.successSnackBar(
+        title: 'Product updated',
+        message: 'Your changes were saved successfully.',
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final product = _product;
     final image = product.images.isEmpty ? null : product.images.first;
     final imageUrl = image?.displayUrl;
     final variant = product.defaultVariant;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Product details')),
+      appBar: AppBar(
+        title: const Text('Product details'),
+        actions: [
+          IconButton(
+            onPressed: _editProduct,
+            tooltip: 'Edit product',
+            icon: const Icon(Icons.edit_outlined),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(TSizes.defaultSpace),
         children: [
@@ -78,31 +119,21 @@ class SellerProductDetail extends StatelessWidget {
           if (product.variants.isEmpty)
             const Text('No variants')
           else
-            for (final variant in product.variants)
+            for (final item in product.variants)
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(
-                  [
-                        if (variant.color.isNotEmpty) variant.color,
-                        if (variant.size.isNotEmpty) variant.size,
-                      ].join(' · ').isEmpty
-                      ? 'Standard'
-                      : [
-                          if (variant.color.isNotEmpty) variant.color,
-                          if (variant.size.isNotEmpty) variant.size,
-                        ].join(' · '),
-                ),
+                title: Text(item.label),
                 subtitle: Text(
-                  '${variant.stock} in stock${variant.discountPercent > 0 ? ' · ${variant.discountPercent}% off' : ''}',
+                  '${item.stock} in stock${item.discountPercent > 0 ? ' · ${item.discountPercent}% off' : ''}',
                 ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(TCurrency.format(variant.effectivePrice)),
-                    if (variant.isOnSale) ...[
+                    Text(TCurrency.format(item.effectivePrice)),
+                    if (item.isOnSale) ...[
                       const SizedBox(width: TSizes.xs),
                       Text(
-                        TCurrency.format(variant.price),
+                        TCurrency.format(item.price),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           decoration: TextDecoration.lineThrough,
                         ),

@@ -37,8 +37,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
   Future<void> _pickPhoto() async {
     if (_isPickingPhoto || _isCleaningUploads || _isSavingProduct) return;
     if (_photos.length >= _maxPhotos) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You can add up to 5 photos.')),
+      TLoaders.errorSnackBar(
+        title: 'Photo limit reached',
+        message: 'You can add up to 5 photos.',
       );
       return;
     }
@@ -60,9 +61,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
       });
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Could not pick photo: $error')));
+      TLoaders.errorSnackBar(
+        title: 'Could not pick photo',
+        message: error.toString().replaceFirst('Exception: ', ''),
+      );
     } finally {
       if (mounted) setState(() => _isPickingPhoto = false);
     }
@@ -91,28 +93,67 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
   }
 
+  void _closeScreen() {
+    setState(() => _allowPop = true);
+    Navigator.of(context).pop();
+  }
+
+  /// Back button: try to remove photos that were uploaded but never attached
+  /// to a product. Cleanup is best-effort, so if something fails the seller can
+  /// still choose to leave instead of being stuck on this screen.
   Future<void> _discardAndClose() async {
     if (_isSavingProduct || _isCleaningUploads) return;
-    setState(() => _isCleaningUploads = true);
-    try {
-      final paths = {..._uploadedImagePaths, ..._pendingCleanupPaths};
-      for (final path in paths) {
-        await _productRepository.deleteUnusedProductImage(path);
-      }
-      _pendingCleanupPaths.clear();
-      _uploadedImagePaths.clear();
-      if (!mounted) return;
-      setState(() => _allowPop = true);
-      Navigator.of(context).pop();
-    } catch (error) {
-      if (!mounted) return;
-      TLoaders.errorSnackBar(
-        title: 'Image cleanup failed',
-        message: error.toString().replaceFirst('Exception: ', ''),
-      );
-    } finally {
-      if (mounted) setState(() => _isCleaningUploads = false);
+
+    final paths = {..._uploadedImagePaths, ..._pendingCleanupPaths};
+    if (paths.isEmpty) {
+      _closeScreen();
+      return;
     }
+
+    setState(() => _isCleaningUploads = true);
+    final failed = <String>{};
+    for (final path in paths) {
+      try {
+        await _productRepository.deleteUnusedProductImage(path);
+      } catch (_) {
+        failed.add(path);
+      }
+    }
+    if (!mounted) return;
+
+    // Every uploaded file was just handled (deleted or queued for a later retry),
+    // so the next save must upload the photos again.
+    _uploadedImagePaths = [];
+    _pendingCleanupPaths
+      ..clear()
+      ..addAll(failed);
+    setState(() => _isCleaningUploads = false);
+
+    if (failed.isEmpty) {
+      _closeScreen();
+      return;
+    }
+
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Some photos could not be removed'),
+        content: const Text(
+          'They are not attached to any product. Leave anyway?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Stay'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Leave anyway'),
+          ),
+        ],
+      ),
+    );
+    if (leave == true && mounted) _closeScreen();
   }
 
   Future<void> _saveProduct() async {
@@ -142,9 +183,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
     setState(() => _isSavingProduct = true);
     try {
+      // Old removed photos are cleaned up on a best-effort basis: a failed
+      // delete keeps the path queued and must never stop the product saving.
       for (final path in _pendingCleanupPaths.toList()) {
-        await _productRepository.deleteUnusedProductImage(path);
-        _pendingCleanupPaths.remove(path);
+        try {
+          await _productRepository.deleteUnusedProductImage(path);
+          _pendingCleanupPaths.remove(path);
+        } catch (_) {
+          // Try again next time.
+        }
       }
       final imagePaths = await _productRepository.uploadProductImages(
         _photos,
@@ -153,8 +200,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       );
       await controller.submitProduct(imagePaths: imagePaths);
       if (!mounted) return;
-      setState(() => _allowPop = true);
-      Navigator.of(context).pop();
+      _closeScreen();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         TLoaders.successSnackBar(
           title: 'Product added',
@@ -187,48 +233,48 @@ class _AddProductScreenState extends State<AddProductScreen> {
         if (!didPop) unawaited(_discardAndClose());
       },
       child: Scaffold(
-      appBar: AppBar(
-        automaticallyImplyActions: true,
-        titleSpacing: TSizes.md * 6,
-        title: Text('Add product'),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(TSizes.defaultSpace),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TSectionHeading(title: 'Photos', showActionButton: false),
-                  Text(
-                    '${_photos.length} of $_maxPhotos',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ],
-              ),
-              const SizedBox(height: TSizes.spaceBtwInputFields),
-              Wrap(
-                spacing: TSizes.spaceBtwInputFields,
-                runSpacing: TSizes.spaceBtwInputFields,
-                children: [
-                  for (var index = 0; index < _photos.length; index++)
-                    _buildPhotoTile(index, dark),
-                  if (_photos.length < _maxPhotos) _buildAddPhotoTile(dark),
-                ],
-              ),
-              const SizedBox(height: TSizes.spaceBtwInputFields),
-              TSectionHeading(title: 'Product Info', showActionButton: false),
-              const SizedBox(height: TSizes.spaceBtwInputFields),
-              ProductInfoContainer(
-                onSave: _saveProduct,
-                isSaving: _isSavingProduct,
-              ),
-            ],
+        appBar: AppBar(
+          automaticallyImplyActions: true,
+          titleSpacing: TSizes.md * 6,
+          title: Text('Add product'),
+        ),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(TSizes.defaultSpace),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TSectionHeading(title: 'Photos', showActionButton: false),
+                    Text(
+                      '${_photos.length} of $_maxPhotos',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: TSizes.spaceBtwInputFields),
+                Wrap(
+                  spacing: TSizes.spaceBtwInputFields,
+                  runSpacing: TSizes.spaceBtwInputFields,
+                  children: [
+                    for (var index = 0; index < _photos.length; index++)
+                      _buildPhotoTile(index, dark),
+                    if (_photos.length < _maxPhotos) _buildAddPhotoTile(dark),
+                  ],
+                ),
+                const SizedBox(height: TSizes.spaceBtwInputFields),
+                TSectionHeading(title: 'Product Info', showActionButton: false),
+                const SizedBox(height: TSizes.spaceBtwInputFields),
+                ProductInfoContainer(
+                  onSave: _saveProduct,
+                  isSaving: _isSavingProduct,
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }

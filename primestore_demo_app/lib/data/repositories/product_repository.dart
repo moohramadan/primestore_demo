@@ -21,16 +21,7 @@ class ProductRepository {
       throw _responseError(response, 'Could not load your products');
     }
 
-    final decoded = jsonDecode(response.body);
-    if (decoded is! List) {
-      throw const FormatException('The server returned invalid products.');
-    }
-    return decoded.map((item) {
-      if (item is! Map<String, dynamic>) {
-        throw const FormatException('The server returned invalid products.');
-      }
-      return ProductModel.fromJson(item);
-    }).toList();
+    return _parseProducts(response);
   }
 
   Future<List<ProductOption>> fetchCategories() async {
@@ -57,6 +48,7 @@ class ProductRepository {
           return ProductOption(
             id: (item['id'] as num).toInt(),
             name: item['name'] as String,
+            icon: item['icon'] is String ? item['icon'] as String : '',
           );
         })
         .where((category) => category.name.toLowerCase() != 'all')
@@ -71,16 +63,17 @@ class ProductRepository {
       throw _responseError(response, 'Could not load products for category');
     }
 
-    final decoded = jsonDecode(response.body);
-    if (decoded is! List) {
-      throw const FormatException('The server returned invalid products.');
+    return _parseProducts(response);
+  }
+
+  Future<List<ProductModel>> fetchFeaturedProducts() async {
+    final response = await http.get(
+      Uri.parse('${ApiConstants.baseUrl}/products/featured'),
+    );
+    if (response.statusCode != 200) {
+      throw _responseError(response, 'Could not load featured products');
     }
-    return decoded.map((item) {
-      if (item is! Map<String, dynamic>) {
-        throw const FormatException('The server returned invalid products.');
-      }
-      return ProductModel.fromJson(item);
-    }).toList();
+    return _parseProducts(response);
   }
 
   Future<List<ProductOption>> fetchBrands() async {
@@ -200,7 +193,9 @@ class ProductRepository {
         body: jsonEncode({'path': path}),
       ),
     );
-    if (response.statusCode != 204) {
+    // 409 means a saved product already uses this image, so it must be kept.
+    // Either way there is nothing left to clean up.
+    if (response.statusCode != 204 && response.statusCode != 409) {
       throw _responseError(response, 'Could not remove uploaded image');
     }
   }
@@ -219,6 +214,46 @@ class ProductRepository {
     if (response.statusCode != 201) {
       throw _responseError(response, 'Could not create product');
     }
+  }
+
+  Future<ProductModel> updateSellerProduct(
+    int productId,
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await _authenticatedClient.send(
+      (accessToken) => http.put(
+        Uri.parse('${ApiConstants.baseUrl}/seller/products/$productId'),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(payload),
+      ),
+    );
+    if (response.statusCode != 200) {
+      throw _responseError(response, 'Could not update product');
+    }
+
+    final decoded = _decodeObject(response, 'Could not update product');
+    final product = decoded['product'];
+    if (product is! Map<String, dynamic>) {
+      throw const FormatException('The server returned an invalid product.');
+    }
+    return ProductModel.fromJson(product);
+  }
+
+  /// Decodes a response body holding a JSON list of products.
+  List<ProductModel> _parseProducts(http.Response response) {
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) {
+      throw const FormatException('The server returned invalid products.');
+    }
+    return decoded.map((item) {
+      if (item is! Map<String, dynamic>) {
+        throw const FormatException('The server returned invalid products.');
+      }
+      return ProductModel.fromJson(item);
+    }).toList();
   }
 
   String _imageContentType(Uint8List bytes) {
@@ -271,8 +306,11 @@ class ProductRepository {
 }
 
 class ProductOption {
-  const ProductOption({required this.id, required this.name});
+  const ProductOption({required this.id, required this.name, this.icon = ''});
 
   final int id;
   final String name;
+
+  /// Icon slug from the server (categories only), for example `headphone`.
+  final String icon;
 }

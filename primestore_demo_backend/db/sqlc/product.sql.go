@@ -92,9 +92,11 @@ func (q *Queries) CreateProductVariant(ctx context.Context, arg CreateProductVar
 }
 
 const getProduct = `-- name: GetProduct :one
-SELECT p.id, p.seller_id, p.category_id, p.name, p.description, p.created_at, p.brand_id, p.is_featured, b.name AS brand_name, b.is_verified AS brand_verified
+SELECT p.id, p.seller_id, p.category_id, p.name, p.description, p.created_at, p.brand_id, p.is_featured, b.name AS brand_name, b.is_verified AS brand_verified,
+       COALESCE(c.name, '') AS category_name
 FROM products p
 LEFT JOIN brands b ON p.brand_id = b.id
+LEFT JOIN categories c ON p.category_id = c.id
 WHERE p.id = $1
 `
 
@@ -109,6 +111,7 @@ type GetProductRow struct {
 	IsFeatured    bool           `json:"is_featured"`
 	BrandName     sql.NullString `json:"brand_name"`
 	BrandVerified sql.NullBool   `json:"brand_verified"`
+	CategoryName  string         `json:"category_name"`
 }
 
 func (q *Queries) GetProduct(ctx context.Context, id int32) (GetProductRow, error) {
@@ -125,6 +128,7 @@ func (q *Queries) GetProduct(ctx context.Context, id int32) (GetProductRow, erro
 		&i.IsFeatured,
 		&i.BrandName,
 		&i.BrandVerified,
+		&i.CategoryName,
 	)
 	return i, err
 }
@@ -401,7 +405,7 @@ func (q *Queries) ListProductsByCategory(ctx context.Context, categoryID sql.Nul
 }
 
 const listSellerProducts = `-- name: ListSellerProducts :many
-SELECT p.id, p.name, p.description, p.is_featured,
+SELECT p.id, p.category_id, p.brand_id, p.name, p.description, p.is_featured,
        COALESCE(b.name, '') AS brand_name,
        COALESCE(b.is_verified, false) AS brand_verified,
        COALESCE(c.name, '') AS category_name
@@ -414,6 +418,8 @@ ORDER BY p.id DESC
 
 type ListSellerProductsRow struct {
 	ID            int32          `json:"id"`
+	CategoryID    sql.NullInt32  `json:"category_id"`
+	BrandID       sql.NullInt32  `json:"brand_id"`
 	Name          string         `json:"name"`
 	Description   sql.NullString `json:"description"`
 	IsFeatured    bool           `json:"is_featured"`
@@ -433,6 +439,8 @@ func (q *Queries) ListSellerProducts(ctx context.Context, sellerID sql.NullInt32
 		var i ListSellerProductsRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.CategoryID,
+			&i.BrandID,
 			&i.Name,
 			&i.Description,
 			&i.IsFeatured,
@@ -451,4 +459,73 @@ func (q *Queries) ListSellerProducts(ctx context.Context, sellerID sql.NullInt32
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateSellerProduct = `-- name: UpdateSellerProduct :execrows
+UPDATE products
+SET name = $3, description = $4, category_id = $5, brand_id = $6
+WHERE id = $1 AND seller_id = $2
+`
+
+type UpdateSellerProductParams struct {
+	ID          int32          `json:"id"`
+	SellerID    sql.NullInt32  `json:"seller_id"`
+	Name        string         `json:"name"`
+	Description sql.NullString `json:"description"`
+	CategoryID  sql.NullInt32  `json:"category_id"`
+	BrandID     sql.NullInt32  `json:"brand_id"`
+}
+
+func (q *Queries) UpdateSellerProduct(ctx context.Context, arg UpdateSellerProductParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updateSellerProduct,
+		arg.ID,
+		arg.SellerID,
+		arg.Name,
+		arg.Description,
+		arg.CategoryID,
+		arg.BrandID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const updateSellerProductVariant = `-- name: UpdateSellerProductVariant :execrows
+UPDATE product_variants AS v
+SET color = $4, size = $5, price = $6, sale_price = $7,
+    discount_percent = $8, stock = $9
+FROM products AS p
+WHERE v.id = $1 AND v.product_id = $2
+  AND p.id = v.product_id AND p.seller_id = $3
+`
+
+type UpdateSellerProductVariantParams struct {
+	ID              int32          `json:"id"`
+	ProductID       int32          `json:"product_id"`
+	SellerID        sql.NullInt32  `json:"seller_id"`
+	Color           sql.NullString `json:"color"`
+	Size            sql.NullString `json:"size"`
+	Price           string         `json:"price"`
+	SalePrice       sql.NullString `json:"sale_price"`
+	DiscountPercent int32          `json:"discount_percent"`
+	Stock           int32          `json:"stock"`
+}
+
+func (q *Queries) UpdateSellerProductVariant(ctx context.Context, arg UpdateSellerProductVariantParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updateSellerProductVariant,
+		arg.ID,
+		arg.ProductID,
+		arg.SellerID,
+		arg.Color,
+		arg.Size,
+		arg.Price,
+		arg.SalePrice,
+		arg.DiscountPercent,
+		arg.Stock,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }

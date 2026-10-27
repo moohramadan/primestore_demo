@@ -2,6 +2,7 @@ import 'package:demo_project/common/widgets/icons/wislist_icon.dart';
 import 'package:demo_project/common/widgets/effects/shimmer_effect.dart';
 import 'package:demo_project/features/shop/controllers/wishlist_controller.dart';
 import 'package:demo_project/features/shop/screens/product_details/product_detail.dart';
+import 'package:demo_project/utils/constants/currency.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -117,7 +118,11 @@ class _WishlistScreenState extends State<WishlistScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              '\$${product.defaultVariant?.effectivePrice.toStringAsFixed(2) ?? '-'}',
+                              product.defaultVariant == null
+                                  ? '-'
+                                  : TCurrency.format(
+                                      product.defaultVariant!.effectivePrice,
+                                    ),
                             ),
                           ],
                         ),

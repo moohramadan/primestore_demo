@@ -1,6 +1,6 @@
-import 'package:demo_project/data/repositories/auth_repository.dart';
 import 'package:demo_project/data/repositories/product_repository.dart';
 import 'package:demo_project/features/shop/models/product_model.dart';
+import 'package:demo_project/utils/popups/loaders.dart';
 import 'package:get/get.dart';
 
 class HomeController extends GetxController {
@@ -12,7 +12,6 @@ class HomeController extends GetxController {
   final RxnString categoriesError = RxnString();
   final RxnString productsError = RxnString();
 
-  final _authController = AuthController();
   final _productRepository = ProductRepository();
   int _productRequest = 0;
 
@@ -29,7 +28,12 @@ class HomeController extends GetxController {
     try {
       categories.assignAll(await _productRepository.fetchCategories());
     } catch (error) {
-      categoriesError.value = error.toString().replaceFirst('Exception: ', '');
+      final message = error.toString().replaceFirst('Exception: ', '');
+      categoriesError.value = message;
+      TLoaders.errorSnackBar(
+        title: 'Could not load categories',
+        message: message,
+      );
     } finally {
       isLoadingCategories.value = false;
     }
@@ -38,26 +42,34 @@ class HomeController extends GetxController {
   Future<void> fetchFeaturedProducts() => selectCategory(null);
 
   Future<void> selectCategory(int? categoryId) async {
+    // Tapping the category that is already showing products does nothing.
+    // After an error (or while loading) the call goes through, so Retry works.
+    final alreadyShowing = categoryId == selectedCategoryId.value &&
+        !isLoading.value &&
+        productsError.value == null;
+    if (alreadyShowing) return;
+
     selectedCategoryId.value = categoryId;
     final request = ++_productRequest;
     isLoading.value = true;
     productsError.value = null;
     try {
       final products = categoryId == null
-          ? await _authController.getFeaturedProducts()
+          ? await _productRepository.fetchFeaturedProducts()
           : await _productRepository.fetchProductsByCategory(categoryId);
       if (request == _productRequest) {
         featuredProducts.assignAll(products);
       }
     } catch (error) {
       if (request == _productRequest) {
-        productsError.value = error.toString().replaceFirst(
+        final message = error.toString().replaceFirst(
           'Exception: ',
           '',
         );
-        Get.snackbar(
-          'Could not load products',
-          error.toString().replaceFirst('Exception: ', ''),
+        productsError.value = message;
+        TLoaders.errorSnackBar(
+          title: 'Could not load products',
+          message: message,
         );
       }
     } finally {

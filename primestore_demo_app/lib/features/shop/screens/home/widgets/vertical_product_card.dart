@@ -4,6 +4,7 @@ import 'package:demo_project/common/widgets/texts/product_title_text.dart';
 import 'package:demo_project/features/shop/models/product_model.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
+import 'package:demo_project/utils/constants/currency.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 
@@ -91,7 +92,7 @@ class TVerticalProductCard extends StatelessWidget {
                           if (variant?.isOnSale ?? false) ...[
                             const SizedBox(width: 10),
                             Text(
-                              '\$${originalPrice.toStringAsFixed(2)}',
+                              TCurrency.format(originalPrice),
                               style: Theme.of(context).textTheme.titleSmall!
                                   .apply(
                                     decoration: TextDecoration.lineThrough,

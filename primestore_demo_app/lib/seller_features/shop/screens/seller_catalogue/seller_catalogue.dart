@@ -1,5 +1,6 @@
 import 'package:demo_project/common/widgets/boxes/search_box.dart';
 import 'package:demo_project/common/widgets/custom_shapes/containers/rounded_container.dart';
+import 'package:demo_project/common/widgets/effects/shimmer_effect.dart';
 import 'package:demo_project/common/widgets/list_title/product_tile.dart';
 import 'package:demo_project/common/widgets/texts/section_heading.dart';
 import 'package:demo_project/data/repositories/product_repository.dart';
@@ -146,19 +147,35 @@ class _SellerCatalogueScreenState extends State<SellerCatalogueScreen> {
               ],
             ),
             const SizedBox(height: TSizes.sm),
-            Text(
-              '${_isLoading ? _products.length : products.length} of ${_products.length} products',
-              style: Theme.of(
-                context,
-              ).textTheme.labelMedium!.apply(fontSizeDelta: TSizes.sm - 4),
-            ),
+            if (_isLoading)
+              const TShimmerEffect(width: 112, height: 12, radius: 4)
+            else
+              Text(
+                '${products.length} of ${_products.length} products',
+                style: Theme.of(
+                  context,
+                ).textTheme.labelMedium!.apply(fontSizeDelta: TSizes.sm - 4),
+              ),
             const SizedBox(height: TSizes.spaceBtwItems),
             TSearchBox(
               controller: _searchController,
               onChanged: (value) => setState(() => _searchQuery = value),
             ),
             const SizedBox(height: TSizes.spaceBtwItems),
-            if (_categories.isNotEmpty)
+            if (_isLoading)
+              SizedBox(
+                height: 42,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: 4,
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(width: TSizes.sm),
+                  itemBuilder: (_, _) => const Center(
+                    child: TShimmerEffect(width: 76, height: 32, radius: 20),
+                  ),
+                ),
+              )
+            else if (_categories.isNotEmpty)
               SizedBox(
                 height: 42,
                 child: ListView(
@@ -172,10 +189,7 @@ class _SellerCatalogueScreenState extends State<SellerCatalogueScreen> {
               ),
             const SizedBox(height: TSizes.spaceBtwItems + 10),
             if (_isLoading)
-              const Padding(
-                padding: EdgeInsets.all(TSizes.xl),
-                child: Center(child: CircularProgressIndicator()),
-              )
+              const _CatalogueLoadingShimmer()
             else if (_error != null)
               _CatalogueMessage(
                 icon: Iconsax.warning_2,
@@ -227,7 +241,75 @@ class _SellerCatalogueScreenState extends State<SellerCatalogueScreen> {
       originalPrice: product.defaultVariant?.price,
       icon: Iconsax.box,
       imageUrl: product.mainImageUrl,
-      onTap: () => Get.to(() => SellerProductDetail(product: product)),
+      onTap: () => Get.to(
+        () => SellerProductDetail(
+          product: product,
+          onProductChanged: _replaceProduct,
+        ),
+      ),
+    );
+  }
+
+  /// Swaps one edited product into the list without reloading everything,
+  /// so the scroll position, search text and category filter stay as they were.
+  void _replaceProduct(ProductModel updated) {
+    if (!mounted) return;
+    setState(() {
+      _products = [
+        for (final item in _products) item.id == updated.id ? updated : item,
+      ];
+    });
+  }
+}
+
+class _CatalogueLoadingShimmer extends StatelessWidget {
+  const _CatalogueLoadingShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (var index = 0; index < 4; index++) ...[
+          Container(
+            padding: const EdgeInsets.all(TSizes.sm),
+            decoration: BoxDecoration(
+              border: Border.all(color: Theme.of(context).dividerColor),
+              borderRadius: BorderRadius.circular(TSizes.borderRadiusLg),
+            ),
+            child: const Row(
+              children: [
+                TShimmerEffect(width: 48, height: 48, radius: 8),
+                SizedBox(width: TSizes.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TShimmerEffect(
+                        width: double.infinity,
+                        height: 14,
+                        radius: 4,
+                      ),
+                      SizedBox(height: TSizes.sm),
+                      TShimmerEffect(width: 88, height: 12, radius: 4),
+                    ],
+                  ),
+                ),
+                SizedBox(width: TSizes.md),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    TShimmerEffect(width: 64, height: 14, radius: 4),
+                    SizedBox(height: TSizes.sm),
+                    TShimmerEffect(width: 44, height: 12, radius: 4),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (index != 3)
+            const SizedBox(height: TSizes.spaceBtwInputFields),
+        ],
+      ],
     );
   }
 }

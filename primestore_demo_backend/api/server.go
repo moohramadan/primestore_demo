@@ -63,10 +63,13 @@ func NewServer(store db.Queries, conn *sql.DB, tokenMaker *util.TokenMaker, mail
 	router.GET("/brands", server.listBrands)
 	uploadLimiter := NewRateLimiter(20, 15*time.Minute)
 	authRoutes.POST("/seller/products/upload-urls", rateLimitMiddleware(uploadLimiter), sellerOnly(server), server.createProductUploadURLs)
-	authRoutes.POST("/seller/products/upload-cleanup", sellerOnly(server), server.deleteUnusedProductImage)
+	// Cleanup is called once per removed photo (up to 5 per product), so allow more than uploads.
+	cleanupLimiter := NewRateLimiter(60, 15*time.Minute)
+	authRoutes.POST("/seller/products/upload-cleanup", rateLimitMiddleware(cleanupLimiter), sellerOnly(server), server.deleteUnusedProductImage)
 	productLimiter := NewRateLimiter(20, 15*time.Minute)
 	authRoutes.POST("/seller/products", rateLimitMiddleware(productLimiter), sellerOnly(server), server.createProduct)
 	authRoutes.GET("/seller/products", sellerOnly(server), server.listSellerProducts)
+	authRoutes.PUT("/seller/products/:id", rateLimitMiddleware(productLimiter), sellerOnly(server), server.updateSellerProduct)
 
 	server.router = router
 	return server
