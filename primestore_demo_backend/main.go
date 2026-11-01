@@ -1,16 +1,18 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"os"
 	"strconv"
 
-	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
 	"primestore_demo_backend/api"
 	db "primestore_demo_backend/db/sqlc"
 	"primestore_demo_backend/util"
+
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 const (
@@ -57,8 +59,16 @@ func main() {
 	if googleClientID == "" {
 		log.Println("warning: GOOGLE_CLIENT_ID is not set, Google sign-in will reject every request")
 	}
+	bucket := os.Getenv("S3_BUCKET")
+	if bucket == "" {
+		log.Fatal("S3_BUCKET is not set")
+	}
+	images, err := util.NewImageStorage(context.Background(), bucket, os.Getenv("S3_PUBLIC_BASE_URL"))
+	if err != nil {
+		log.Fatal("cannot initialize image storage:", err)
+	}
 
-	server := api.NewServer(*store, tokenMaker, mailer, googleClientID)
+	server := api.NewServer(*store, conn, tokenMaker, mailer, googleClientID, images)
 
 	err = server.Start(serverAddress)
 	if err != nil {

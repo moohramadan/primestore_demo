@@ -21,7 +21,7 @@ class TTextFieldRounded extends StatelessWidget {
     this.readOnly = false,
     this.enabled = true,
     this.maxLines = 1,
-    this.borderRadius = 24,
+    this.borderRadius = 12,
     this.padding = const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
     this.fillColor,
     this.textColor,
@@ -61,7 +61,7 @@ class TTextFieldRounded extends StatelessWidget {
     final dark = THelperFunctions.isDarkMode(context);
     final effectiveFillColor = fillColor ?? (dark ? TColors.black : Colors.white);
     final effectiveTextColor = textColor ?? (dark ? Colors.white : Colors.black87);
-    final effectiveBorderColor = borderColor ?? (dark ? TColors.dark : TColors.dark);
+    final effectiveBorderColor = borderColor ?? (dark ? TColors.darkerGrey : TColors.dark);
     final effectiveFocusedBorderColor = focusedBorderColor ?? effectiveBorderColor;
 
     return TextFormField(

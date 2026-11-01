@@ -1,9 +1,8 @@
 import 'package:demo_project/common/widgets/buttons/elevevated_button.dart';
 import 'package:demo_project/common/widgets/texts/t_headline.dart';
 import 'package:demo_project/common/widgets/texts/t_subtitle.dart';
-import 'package:demo_project/navigation/seller_nav.dart';
-import 'package:demo_project/seller_features/autentication/screens/seller_signup/steps/upload_documents/controllers/upload_documents_controller.dart';
-import 'package:demo_project/seller_features/autentication/screens/seller_signup/steps/upload_documents/widgets/upload_image.dart';
+import 'package:demo_project/seller_features/personalization/screens/seller_profile/widgets/upload_documents/controllers/upload_documents_controller.dart';
+import 'package:demo_project/seller_features/personalization/screens/seller_profile/widgets/upload_documents/widgets/upload_image.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/helpers/helper_functions.dart';
@@ -18,7 +17,7 @@ class UploadVerificationDocuments extends StatelessWidget {
     final controller = Get.put(UploadDocumentsController());
     final dark = THelperFunctions.isDarkMode(context);
     return Scaffold(
-      backgroundColor: dark ? TColors.dark : TColors.white,
+      //backgroundColor: dark ? TColors.dark : TColors.white,
       appBar: AppBar(
         automaticallyImplyLeading: true,
         iconTheme: IconThemeData(color: dark ? TColors.white : TColors.black),
@@ -29,6 +28,7 @@ class UploadVerificationDocuments extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(height: TSizes.spaceBtwSections),
               const THeadline(title: 'Upload your ID'),
               const SizedBox(height: TSizes.sm),
               const TSubtitle(
@@ -38,7 +38,10 @@ class UploadVerificationDocuments extends StatelessWidget {
               const SizedBox(height: TSizes.spaceBtwSections),
               UploadImage(controller: controller),
               const Spacer(),
-              TRoundedElevatedButton(onPressed: () => Get.to(() => SellerNavigationMenu()), text: "Skip"),
+              TRoundedElevatedButton(
+                onPressed: Get.back,
+                text: 'Do this later',
+              ),
               const SizedBox(height: TSizes.sm),
               Obx(
                 () => TRoundedElevatedButton(
@@ -52,7 +55,6 @@ class UploadVerificationDocuments extends StatelessWidget {
                           ),
                         ),
                   text: 'Continue',
-                  
                 ),
               ),
 

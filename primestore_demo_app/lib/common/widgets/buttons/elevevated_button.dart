@@ -1,4 +1,3 @@
-
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +14,9 @@ class TRoundedElevatedButton extends StatelessWidget {
     this.textStyle,
     this.padding,
     this.borderRadius,
+    this.borderColor,
     this.elevation,
+    this.isLoading = false,
   });
 
   final Color color;
@@ -27,20 +28,47 @@ class TRoundedElevatedButton extends StatelessWidget {
   final TextStyle? textStyle;
   final EdgeInsetsGeometry? padding;
   final double? borderRadius;
+  final Color? borderColor;
   final double? elevation;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     final buttonText = Text(
       text,
-      style: textStyle ??
+      style:
+          textStyle ??
           Theme.of(context).textTheme.headlineSmall!.apply(
             color: TColors.white,
             fontWeightDelta: 28,
           ),
     );
 
-    final buttonChild = icon == null
+    final buttonChild = isLoading
+        ? Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(TColors.white),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Saving...',
+                style:
+                    textStyle ??
+                    Theme.of(context).textTheme.headlineSmall!.apply(
+                      color: TColors.white,
+                      fontWeightDelta: 28,
+                    ),
+              ),
+            ],
+          )
+        : icon == null
         ? buttonText
         : SizedBox(
             width: width ?? double.infinity,
@@ -58,10 +86,13 @@ class TRoundedElevatedButton extends StatelessWidget {
       width: width,
       height: height,
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
-          padding: padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding:
+              padding ??
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          side: borderColor == null ? null : BorderSide(color: borderColor!),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius ?? 16),
           ),

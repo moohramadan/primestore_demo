@@ -5,6 +5,7 @@ import (
 	"net/http"
 	db "primestore_demo_backend/db/sqlc"
 	"primestore_demo_backend/util"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -70,14 +71,50 @@ func (server *Server) createAddress(ctx *gin.Context) {
 		Country:           req.Country,
 	}
    
-	address, err:= server.store.CreateAddress(ctx, arg)
-	if err != nil{
-		internalError(ctx, err, "could not add adress")
+		address, err := server.store.CreateAddress(ctx, arg)
+	if err != nil {
+		internalError(ctx, err, "could not add address")
 		return
 	}
+
+	// New addresses become the default automatically.
+	if _, err := server.store.SetDefaultAddress(ctx, db.SetDefaultAddressParams{
+		UserID: authPayload.UserID,
+		ID:     address.ID,
+	}); err != nil {
+		internalError(ctx, err, "could not set default address")
+		return
+	}
+	address.IsDefault = true // the row we hold is stale, so reflect the change
+
 	ctx.JSON(http.StatusCreated, gin.H{"address": newAddressResponse(address)})
    
 }
+func (server *Server) setDefaultAddress(ctx *gin.Context) {
+	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid address id"})
+		return
+	}
+
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*util.UserClaims)
+
+	rows, err := server.store.SetDefaultAddress(ctx, db.SetDefaultAddressParams{
+		UserID: authPayload.UserID,
+		ID:     id,
+	})
+	if err != nil {
+		internalError(ctx, err, "could not set default address")
+		return
+	}
+	if rows == 0 {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "address not found"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "default address updated"})
+}
+
 func (server *Server) listAddresses(ctx *gin.Context) {
 	authPayload := ctx.MustGet(authorizationPayloadKey).(*util.UserClaims)
 

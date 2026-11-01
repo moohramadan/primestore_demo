@@ -18,3 +18,11 @@ INSERT INTO addresses (
 SELECT * FROM addresses
 WHERE user_id = $1
 ORDER BY is_default DESC, created_at DESC;
+
+-- name: SetDefaultAddress :execrows
+UPDATE addresses AS a
+SET is_default = (a.id = $2)
+WHERE a.user_id = $1
+  AND EXISTS (
+    SELECT 1 FROM addresses AS b WHERE b.id = $2 AND b.user_id = $1
+  );

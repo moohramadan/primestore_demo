@@ -12,9 +12,8 @@ import 'package:demo_project/utils/constants/enums.dart';
 import 'package:demo_project/utils/constants/image_strings.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/helpers/helper_functions.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_instance/src/extension_instance.dart';
-import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+import 'package:demo_project/utils/constants/currency.dart';
+import 'package:get/get.dart';
 
 class TProductMetaData extends StatelessWidget {
   const TProductMetaData({super.key, required this.product});
@@ -28,9 +27,9 @@ class TProductMetaData extends StatelessWidget {
 
     return Obx(() {
       final variant = controller.selectedVariant.value;
-      final price = variant?.price ?? 0;
+      final price = variant?.effectivePrice ?? 0;
       final discountPercent = variant?.discountPercent ?? 0;
-      final originalPrice = discountPercent > 0 ? price / (1 - discountPercent / 100) : price;
+      final originalPrice = variant?.price ?? price;
       final inStock = (variant?.stock ?? 0) > 0;
 
       return Column(
@@ -40,7 +39,6 @@ class TProductMetaData extends StatelessWidget {
           Row(
             children: [
               if (discountPercent > 0) ...[
-                /// Sale Tag
                 TRoundedContainer(
                   radius: TSizes.sm,
                   backgroundColor: TColors.secondary.withValues(alpha: 0.8),
@@ -51,15 +49,15 @@ class TProductMetaData extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: TSizes.spaceBtwItems),
-
-                /// Original Price
+              ],
+              if (variant?.isOnSale ?? false) ...[
                 Text(
-                  '\$${originalPrice.toStringAsFixed(0)}',
+                  TCurrency.format(originalPrice),
                   style: Theme.of(context).textTheme.titleSmall!.apply(decoration: TextDecoration.lineThrough),
                 ),
                 const SizedBox(width: TSizes.spaceBtwItems),
               ],
-              TProductPriceText(price: price.toStringAsFixed(0), isLarge: true),
+              TProductPriceText(price: price.toStringAsFixed(2), isLarge: true),
             ],
           ),
           const SizedBox(height: TSizes.spaceBtwItems / 1.5),
@@ -88,7 +86,7 @@ class TProductMetaData extends StatelessWidget {
                 image: TImages.brandImage1, // static placeholder — no brand logo URL wired yet
                 width: 32,
                 height: 32,
-                overlayColor: darkMode ? TColors.white : TColors.black,
+                overlayColor: darkMode ? TColors.black : TColors.black,
               ),
               TBrandTitleWithVerifiedIcon(
                 title: product.brandName,

@@ -112,3 +112,25 @@ func (q *Queries) ListAddressesByUser(ctx context.Context, userID int64) ([]Addr
 	}
 	return items, nil
 }
+
+const setDefaultAddress = `-- name: SetDefaultAddress :execrows
+UPDATE addresses AS a
+SET is_default = (a.id = $2)
+WHERE a.user_id = $1
+  AND EXISTS (
+    SELECT 1 FROM addresses AS b WHERE b.id = $2 AND b.user_id = $1
+  )
+`
+
+type SetDefaultAddressParams struct {
+	UserID int64 `json:"user_id"`
+	ID     int64 `json:"id"`
+}
+
+func (q *Queries) SetDefaultAddress(ctx context.Context, arg SetDefaultAddressParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, setDefaultAddress, arg.UserID, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}

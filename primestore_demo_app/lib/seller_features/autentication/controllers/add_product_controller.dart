@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:demo_project/data/repositories/product_repository.dart';
 
 // ---------------------------------------------------------------------
 // Category -> sizing scheme
@@ -27,72 +28,26 @@ const Map<ProductSizeType, List<String>> sizeOptionsByType = {
   ProductSizeType.none: [],
 };
 
-/// category_id / brand_id lookups, in the same order as the dropdown items
-/// in product_info.dart. Replace these numbers with the real ids from your
-/// `categories` / `brands` tables — everything else in this file works off
-/// whatever ids these two maps return, so this is the only place to touch.
-const Map<String, int> categoryIds = {
-  'Sport': 1,
-  'Electronics': 2,
-  'Phones & Tablets': 3,
-  'Home & Office': 4,
-  'Fashion': 5,
-  'Health & Beauty': 6,
-  'Computing': 7,
-  'Grocery': 8,
-  'Garden & Outdoors': 9,
-  'Automotive': 10,
-  'Audio': 11,
-  'Footwear': 12,
-};
-
-const Map<String, int> brandIds = {
-  'Nike': 1,
-  'Adidas': 2,
-  'Puma': 3,
-  'Apple': 4,
-  'Samsung': 5,
-  'Sony': 6,
-  'JBL': 7,
-  'Xiaomi': 8,
-  'Huawei': 9,
-  'HP': 10,
-  'Dell': 11,
-  'Lenovo': 12,
-  'LG': 13,
-  'Reebok': 14,
-  'New Balance': 15,
-  'Under Armour': 16,
-  'Canon': 17,
-  'Bose': 18,
-};
-
 // ---------------------------------------------------------------------
 // Variant model
 // ---------------------------------------------------------------------
 
 /// One row that becomes a `product_variants` record on the backend.
-/// `size` is null for categories with no sizing scheme.
+/// `color` is empty and `size` is null when the product has no variants.
 class ProductVariantDraft {
   final String color;
   final String? size;
-  final double price;
-  final double discountPercent;
   final int stock;
 
   const ProductVariantDraft({
     required this.color,
     this.size,
-    required this.price,
-    required this.discountPercent,
     required this.stock,
   });
 
   Map<String, dynamic> toJson() => {
         'color': color,
         if (size != null) 'size': size,
-        'price': price,
-        'discount_percent': discountPercent,
         'stock': stock,
       };
 }
@@ -113,14 +68,20 @@ AddProductController get addProductController {
 }
 
 class AddProductController extends GetxController {
+  final ProductRepository _productRepository = ProductRepository();
+  final RxList<ProductOption> categories = <ProductOption>[].obs;
+  final RxList<ProductOption> brands = <ProductOption>[].obs;
+  final RxnInt selectedCategoryId = RxnInt();
+  final RxnInt selectedBrandId = RxnInt(0);
+  final RxString selectedCategoryName = ''.obs;
+  final RxBool isLoadingProductOptions = true.obs;
+  final RxnString productOptionsError = RxnString();
+
   // ---- product-level text fields ----
   final TextEditingController nameController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController originalPriceController = TextEditingController();
   final TextEditingController salePriceController = TextEditingController();
-
-  final RxString selectedCategory = 'Sport'.obs;
-  final RxString selectedBrand = 'Nike'.obs;
 
   // ---- variant selection ----
   final RxList<String> selectedColors = <String>[].obs;
@@ -132,7 +93,7 @@ class AddProductController extends GetxController {
       <String, TextEditingController>{}.obs;
 
   ProductSizeType get sizeType =>
-      categorySizeTypeMap[selectedCategory.value] ?? ProductSizeType.none;
+      categorySizeTypeMap[selectedCategoryName.value] ?? ProductSizeType.none;
 
   List<String> get availableSizes => sizeOptionsByType[sizeType]!;
 
@@ -141,16 +102,53 @@ class AddProductController extends GetxController {
   String _key(String color, String size) =>
       size.isEmpty ? color : '$color::$size';
 
-  void setCategory(String category) {
-    if (selectedCategory.value == category) return;
-    selectedCategory.value = category;
+  @override
+  void onInit() {
+    super.onInit();
+    loadProductOptions();
+  }
+
+  Future<void> loadProductOptions() async {
+    isLoadingProductOptions.value = true;
+    productOptionsError.value = null;
+    try {
+      final results = await Future.wait<List<ProductOption>>([
+        _productRepository.fetchCategories(),
+        _productRepository.fetchBrands(),
+      ]);
+      categories.assignAll(results[0]);
+      brands.assignAll(results[1]);
+      if (categories.isEmpty) {
+        throw StateError('Add at least one product category to the database.');
+      }
+      final selectedCategory = categories.where(
+        (category) => category.id == selectedCategoryId.value,
+      );
+      if (selectedCategory.isEmpty) {
+        selectedCategoryId.value = categories.first.id;
+      }
+      selectedCategoryName.value = categories
+          .firstWhere((category) => category.id == selectedCategoryId.value)
+          .name;
+    } catch (error) {
+      productOptionsError.value = error.toString();
+    } finally {
+      isLoadingProductOptions.value = false;
+    }
+  }
+
+  void setCategory(int categoryId) {
+    final category = categories.firstWhere((item) => item.id == categoryId);
+    if (selectedCategoryId.value == categoryId) return;
+    selectedCategoryId.value = categoryId;
+    selectedCategoryName.value = category.name;
     // Drop any picked size that doesn't belong to the new scheme, e.g.
     // switching from Footwear to Fashion drops 'EU 42'.
     selectedSizes.removeWhere((s) => !availableSizes.contains(s));
     _syncStockControllers();
   }
 
-  void setBrand(String brand) => selectedBrand.value = brand;
+  void setBrand(int? brandId) => selectedBrandId.value = brandId;
 
   void addColor(String color) {
     if (selectedColors.contains(color)) return;
@@ -202,10 +200,7 @@ class AddProductController extends GetxController {
     }
   }
 
-  List<ProductVariantDraft> buildVariants({
-    required double price,
-    required double discountPercent,
-  }) {
+  List<ProductVariantDraft> buildVariants() {
     return stockControllers.entries.map((entry) {
       final parts = entry.key.split('::');
       final color = parts[0];
@@ -214,58 +209,65 @@ class AddProductController extends GetxController {
       return ProductVariantDraft(
         color: color,
         size: size,
-        price: price,
-        discountPercent: discountPercent,
         stock: stock,
       );
     }).toList();
   }
 
-  /// Full payload for the create-product endpoint. Shape mirrors the
-  /// `products` / `product_variants` / `product_images` tables, so the
-  /// backend side of this is just inserting it.
+  static final _moneyPattern = RegExp(r'^\d{1,8}(\.\d{1,2})?$');
+
+  String? validate() {
+    if (nameController.text.trim().isEmpty) return 'Enter a product name.';
+
+    final original = originalPriceController.text.trim();
+    if (!_moneyPattern.hasMatch(original) || double.parse(original) <= 0) {
+      return 'Enter the original price as a number, for example 1500 or 1500.50.';
+    }
+    final sale = salePriceController.text.trim();
+    if (sale.isNotEmpty) {
+      if (!_moneyPattern.hasMatch(sale) || double.parse(sale) <= 0) {
+        return 'Enter the sale price as a number, for example 1200 or 1200.50.';
+      }
+      if (double.parse(sale) > double.parse(original)) {
+        return 'The sale price cannot be higher than the original price.';
+      }
+    }
+    if (selectedCategoryId.value == null) return 'Choose a category.';
+    if (stockControllers.isEmpty) {
+      return needsSize
+          ? 'Pick at least one size or color and size.'
+          : 'Add at least one product variant.';
+    }
+    for (final controller in stockControllers.values) {
+      final stock = int.tryParse(controller.text.trim());
+      if (stock == null || stock < 0) {
+        return 'Enter the stock for every variant.';
+      }
+    }
+    return null;
+  }
+
   Map<String, dynamic> buildProductPayload({
-    required double price,
-    required double discountPercent,
-    List<String> imageUrls = const [],
+    required List<String> imagePaths,
   }) {
     return {
       'name': nameController.text.trim(),
       'description': descriptionController.text.trim(),
-      'category_id': categoryIds[selectedCategory.value] ?? 0,
-      'brand_id': brandIds[selectedBrand.value] ?? 0,
-      'variants': buildVariants(price: price, discountPercent: discountPercent)
+      'category_id': selectedCategoryId.value ?? 0,
+      'brand_id': selectedBrandId.value ?? 0,
+      'original_price': originalPriceController.text.trim(),
+      'sale_price': salePriceController.text.trim(),
+      'image_paths': imagePaths,
+      'variants': buildVariants()
           .map((v) => v.toJson())
           .toList(),
-      'images': [
-        for (var i = 0; i < imageUrls.length; i++)
-          {'image_url': imageUrls[i], 'sort_order': i},
-      ],
     };
   }
 
-  /// Replace this with your real API call (an http/dio POST to your Go
-  /// backend's create-product route). It's a plain function field so
-  /// wiring it up is a one-line change, not a rewrite of this controller:
-  ///
-  ///   addProductController.onSubmit = (payload) async {
-  ///     await dio.post('/products', data: payload);
-  ///   };
-  Future<void> Function(Map<String, dynamic> payload) onSubmit =
-      (payload) async => debugPrint('Product payload: $payload');
-
-  Future<void> submitProduct({List<String> imageUrls = const []}) {
-    final price = double.tryParse(originalPriceController.text.trim()) ?? 0;
-    final salePrice = double.tryParse(salePriceController.text.trim());
-    final discountPercent = (salePrice != null && salePrice > 0 && price > 0)
-       ? ((price - salePrice) / price * 100).clamp(0, 100).toDouble()
-        : 0.0;
-
-    return onSubmit(buildProductPayload(
-      price: price,
-      discountPercent: discountPercent,
-      imageUrls: imageUrls,
-    ));
+  Future<void> submitProduct({required List<String> imagePaths}) async {
+    await _productRepository.createProduct(
+      buildProductPayload(imagePaths: imagePaths),
+    );
   }
 
   @override

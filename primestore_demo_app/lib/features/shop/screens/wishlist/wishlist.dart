@@ -2,6 +2,7 @@ import 'package:demo_project/common/widgets/icons/wislist_icon.dart';
 import 'package:demo_project/common/widgets/effects/shimmer_effect.dart';
 import 'package:demo_project/features/shop/controllers/wishlist_controller.dart';
 import 'package:demo_project/features/shop/screens/product_details/product_detail.dart';
+import 'package:demo_project/utils/constants/currency.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -25,11 +26,8 @@ class _WishlistScreenState extends State<WishlistScreen> {
 
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-      ),
+      appBar: AppBar(automaticallyImplyLeading: false),
       body: Obx(() {
         if (wishlist.isLoading.value) {
           return GridView.builder(
@@ -53,7 +51,11 @@ class _WishlistScreenState extends State<WishlistScreen> {
                       radius: 8,
                     ),
                     SizedBox(height: 10),
-                    TShimmerEffect(width: double.infinity, height: 14, radius: 4),
+                    TShimmerEffect(
+                      width: double.infinity,
+                      height: 14,
+                      radius: 4,
+                    ),
                     SizedBox(height: 8),
                     TShimmerEffect(width: 72, height: 14, radius: 4),
                   ],
@@ -68,7 +70,6 @@ class _WishlistScreenState extends State<WishlistScreen> {
         }
 
         return GestureDetector(
-          
           child: GridView.builder(
             padding: const EdgeInsets.all(12),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -94,28 +95,35 @@ class _WishlistScreenState extends State<WishlistScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
-                            child: product.mainImageUrl != null && product.mainImageUrl!.startsWith('http')
-                  ? Image.network(
-                            product.mainImageUrl!,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                          )
-                  : Image.asset(
-                            product.mainImageUrl ?? 'assets/images/product_placeholder.png',
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                          ),
-                          ),
-                          
-                          
-                          
+                              child:
+                                  product.mainImageUrl != null &&
+                                      product.mainImageUrl!.startsWith('http')
+                                  ? Image.network(
+                                      product.mainImageUrl!,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                    )
+                                  : Image.asset(
+                                      product.mainImageUrl ??
+                                          'assets/images/product_placeholder.png',
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                    ),
+                            ),
+
                             const SizedBox(height: 4),
                             Text(
                               product.name,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            Text('\$${product.defaultVariant?.price.toStringAsFixed(2) ?? '-'}'),
+                            Text(
+                              product.defaultVariant == null
+                                  ? '-'
+                                  : TCurrency.format(
+                                      product.defaultVariant!.effectivePrice,
+                                    ),
+                            ),
                           ],
                         ),
                       ),

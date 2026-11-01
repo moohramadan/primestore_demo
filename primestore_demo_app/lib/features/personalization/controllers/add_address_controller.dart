@@ -1,7 +1,6 @@
 import 'package:demo_project/data/repositories/address_repository.dart';
 import 'package:demo_project/features/autentication/controllers/user_controller.dart';
 import 'package:demo_project/features/personalization/models/address_model.dart';
-import 'package:demo_project/features/personalization/screens/address/adress.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/src/extension_instance.dart';
@@ -18,53 +17,54 @@ class AddAddressController extends GetxController {
   final stateController = TextEditingController();
   final postalCodeController = TextEditingController();
   final countryController = TextEditingController();
-  
+
   final formKey = GlobalKey<FormState>();
   final _addressController = AddressController();
   final _userController = Get.find<UserController>();
 
-
-  final isLoading = false.obs; // or however you track loading elsewhere
+  final isLoading = false.obs;
 
   Future<void> saveAddress() async {
     if (!formKey.currentState!.validate()) return;
     isLoading.value = true;
-   
-    try{
+
+    try {
       await _addressController.createAddress(
-        accessToken: _userController.accessToken.value, 
-        fullName: fullNameController.text, 
-        phone: phoneController.text, 
-        addressLine1: addressLine1Controller.text, 
-        addressLine2: addressLine2Controller.text.isEmpty ? null : addressLine2Controller.text,
-        city: cityController.text, 
-        state: stateController.text, 
-        postalCode: postalCodeController.text, 
-        country: countryController.text
-        );
-        Get.snackbar('Success', 'Address added');
-        Get.to(()=> AddressScreen());
-    }catch (e){
+        accessToken: _userController.accessToken.value,
+        fullName: fullNameController.text,
+        phone: phoneController.text,
+        addressLine1: addressLine1Controller.text,
+        addressLine2: addressLine2Controller.text.isEmpty
+            ? null
+            : addressLine2Controller.text,
+        city: cityController.text,
+        state: stateController.text,
+        postalCode: postalCodeController.text,
+        country: countryController.text,
+      );
+      Get.back(); // AddressScreen refetches when this pops
+      Get.snackbar('Success', 'Address added');
+    } catch (e) {
       Get.snackbar('Error', e.toString());
-    }finally{
+    } finally {
       isLoading.value = false;
     }
-    
   }
 
   @override
   void onClose() {
-   fullNameController.dispose();
-   phoneController.dispose();
-   addressLine1Controller.dispose();
-   addressLine2Controller.dispose();
-   cityController.dispose();
-   stateController.dispose();
-   postalCodeController.dispose();
-   countryController.dispose();
+    fullNameController.dispose();
+    phoneController.dispose();
+    addressLine1Controller.dispose();
+    addressLine2Controller.dispose();
+    cityController.dispose();
+    stateController.dispose();
+    postalCodeController.dispose();
+    countryController.dispose();
     super.onClose();
   }
 }
+
 class AddressListController extends GetxController {
   final _addressController = AddressController();
   final _userController = Get.find<UserController>();
@@ -89,5 +89,16 @@ class AddressListController extends GetxController {
       isLoading.value = false;
     }
   }
-}
 
+  Future<void> setDefault(int addressId) async {
+    try {
+      await _addressController.setDefaultAddress(
+        _userController.accessToken.value,
+        addressId,
+      );
+      await fetchAddresses(); // list re-sorts with the new default on top
+    } catch (e) {
+      Get.snackbar('Error', e.toString());
+    }
+  }
+}

@@ -7,7 +7,6 @@ import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/helpers/helper_functions.dart';
 import 'package:flutter/material.dart';
-import 'package:iconsax/iconsax.dart';
 
 class SellerOrdersScreen extends StatelessWidget {
   const SellerOrdersScreen({super.key});

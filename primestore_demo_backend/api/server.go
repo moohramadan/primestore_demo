@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	db "primestore_demo_backend/db/sqlc"
 	"primestore_demo_backend/util"
 	"time"
@@ -10,15 +11,19 @@ import (
 
 type Server struct {
 	store          db.Queries
+	conn           *sql.DB
 	tokenMaker     *util.TokenMaker
 	mailer         *util.Mailer
 	googleClientID string
 	router         *gin.Engine
+	images         *util.ImageStorage
 }
 
-func NewServer(store db.Queries, tokenMaker *util.TokenMaker, mailer *util.Mailer, googleClientID string) *Server {
+func NewServer(store db.Queries, conn *sql.DB, tokenMaker *util.TokenMaker, mailer *util.Mailer, googleClientID string, images *util.ImageStorage) *Server {
 	server := &Server{
 		store:          store,
+		conn:           conn,
+		images:         images,
 		tokenMaker:     tokenMaker,
 		mailer:         mailer,
 		googleClientID: googleClientID,
@@ -43,13 +48,28 @@ func NewServer(store db.Queries, tokenMaker *util.TokenMaker, mailer *util.Maile
 	authRoutes.POST("/users/me/email/confirm", rateLimitMiddleware(emailChangeConfirmLimiter), server.confirmEmailChange)
 	router.GET("/categories", server.listCategories)
 	router.GET("/products/featured", server.listFeaturedProducts)
+	router.GET("/products/category/:id", server.listProductsByCategory)
 	addressLimiter := NewRateLimiter(5, 15*time.Minute)
 	authRoutes.POST("/addresses", rateLimitMiddleware(addressLimiter), server.createAddress)
+	authRoutes.PUT("/addresses/:id/default", server.setDefaultAddress)
 	authRoutes.GET("/addresses", server.listAddresses)
 	authRoutes.POST("/wishlist", server.addToWishlist)
 	authRoutes.DELETE("/wishlist/:product_id", server.removeFromWishlist)
 	authRoutes.GET("/wishlist", server.listWishlist)
 	authRoutes.GET("/wishlist/ids", server.listWishlistedIDs)
+	sellerLimiter := NewRateLimiter(3, 15*time.Minute)
+	authRoutes.POST("/seller/profile", rateLimitMiddleware(sellerLimiter), server.createSellerProfile)
+	authRoutes.GET("/seller/profile", server.getSellerProfile)
+	router.GET("/brands", server.listBrands)
+	uploadLimiter := NewRateLimiter(20, 15*time.Minute)
+	authRoutes.POST("/seller/products/upload-urls", rateLimitMiddleware(uploadLimiter), sellerOnly(server), server.createProductUploadURLs)
+	// Cleanup is called once per removed photo (up to 5 per product), so allow more than uploads.
+	cleanupLimiter := NewRateLimiter(60, 15*time.Minute)
+	authRoutes.POST("/seller/products/upload-cleanup", rateLimitMiddleware(cleanupLimiter), sellerOnly(server), server.deleteUnusedProductImage)
+	productLimiter := NewRateLimiter(20, 15*time.Minute)
+	authRoutes.POST("/seller/products", rateLimitMiddleware(productLimiter), sellerOnly(server), server.createProduct)
+	authRoutes.GET("/seller/products", sellerOnly(server), server.listSellerProducts)
+	authRoutes.PUT("/seller/products/:id", rateLimitMiddleware(productLimiter), sellerOnly(server), server.updateSellerProduct)
 
 	server.router = router
 	return server

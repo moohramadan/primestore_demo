@@ -65,6 +65,7 @@ type ProductVariant struct {
 	Price           string         `json:"price"`
 	DiscountPercent int32          `json:"discount_percent"`
 	Stock           int32          `json:"stock"`
+	SalePrice       sql.NullString `json:"sale_price"`
 }
 
 type RefreshToken struct {
@@ -73,6 +74,26 @@ type RefreshToken struct {
 	Token     string       `json:"token"`
 	ExpiresAt time.Time    `json:"expires_at"`
 	CreatedAt sql.NullTime `json:"created_at"`
+}
+
+type SellerPayoutAccount struct {
+	ID                int32        `json:"id"`
+	SellerID          int32        `json:"seller_id"`
+	AccountHolderName string       `json:"account_holder_name"`
+	BankName          string       `json:"bank_name"`
+	AccountNumber     string       `json:"account_number"`
+	CreatedAt         sql.NullTime `json:"created_at"`
+}
+
+type SellerProfile struct {
+	ID                 int32        `json:"id"`
+	UserID             int32        `json:"user_id"`
+	AccountType        string       `json:"account_type"`
+	BusinessName       string       `json:"business_name"`
+	BusinessPhone      string       `json:"business_phone"`
+	BusinessAddress    string       `json:"business_address"`
+	VerificationStatus string       `json:"verification_status"`
+	CreatedAt          sql.NullTime `json:"created_at"`
 }
 
 type User struct {
@@ -84,7 +105,6 @@ type User struct {
 	CreatedAt    sql.NullTime   `json:"created_at"`
 	IsVerified   bool           `json:"is_verified"`
 	GoogleID     sql.NullString `json:"google_id"`
-	IsSeller     bool           `json:"is_seller"`
 }
 
 type Wishlist struct {

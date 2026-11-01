@@ -1,5 +1,5 @@
 import 'package:demo_project/common/widgets/texts/t_subtitle.dart';
-import 'package:demo_project/seller_features/autentication/screens/seller_signup/steps/upload_documents/controllers/upload_documents_controller.dart';
+import 'package:demo_project/seller_features/personalization/screens/seller_profile/widgets/upload_documents/controllers/upload_documents_controller.dart';
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:flutter/material.dart';

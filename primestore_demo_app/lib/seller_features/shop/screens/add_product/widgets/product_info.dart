@@ -2,7 +2,7 @@ import 'package:demo_project/common/widgets/buttons/elevevated_button.dart';
 import 'package:demo_project/common/widgets/textfield/dropdown.dart';
 import 'package:demo_project/common/widgets/textfield/textfield_rounded.dart';
 import 'package:demo_project/common/widgets/texts/section_heading.dart';
-import 'package:demo_project/seller_features/shop/controllers/add_product_controller.dart';
+import 'package:demo_project/seller_features/autentication/controllers/add_product_controller.dart';
 import 'package:demo_project/seller_features/shop/screens/add_product/widgets/color_chip_picker.dart';
 import 'package:demo_project/seller_features/shop/screens/add_product/widgets/size_chip_picker.dart';
 import 'package:demo_project/seller_features/shop/screens/add_product/widgets/variant_stock_section.dart';
@@ -13,12 +13,22 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ProductInfoContainer extends StatelessWidget {
-  const ProductInfoContainer({super.key});
+  const ProductInfoContainer({
+    super.key,
+    required this.onSave,
+    required this.isSaving,
+  });
+
+  final Future<void> Function() onSave;
+  final bool isSaving;
 
   @override
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
     final controller = addProductController;
+    final hintStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
+      color: dark ? Colors.white54 : Colors.black45,
+    );
 
     return Container(
       child: Column(
@@ -26,7 +36,7 @@ class ProductInfoContainer extends StatelessWidget {
           TTextFieldRounded(
             controller: controller.nameController,
             hintText: 'WirelessEarbuds',
-            hintTextStyle: Theme.of(context).textTheme.titleMedium,
+            hintTextStyle: hintStyle,
             labelText: 'Product Name',
             labelStyle: Theme.of(context).textTheme.titleMedium,
             focusedBorderColor: dark ? TColors.dark : TColors.dark,
@@ -36,13 +46,17 @@ class ProductInfoContainer extends StatelessWidget {
             controller: controller.descriptionController,
             hintText: 'Description',
             maxLines: 3,
-            hintTextStyle: Theme.of(context).textTheme.titleMedium,
+            hintTextStyle: hintStyle,
             labelText: 'Description',
             labelStyle: Theme.of(context).textTheme.titleMedium,
             focusedBorderColor: dark ? TColors.dark : TColors.dark,
           ),
           SizedBox(height: TSizes.spaceBtwItems),
-          TSectionHeading(title: 'Pricing', showActionButton: false, fontsize: 2),
+          TSectionHeading(
+            title: 'Pricing',
+            showActionButton: false,
+            fontsize: 2,
+          ),
           SizedBox(height: TSizes.spaceBtwItems),
           Row(
             children: [
@@ -50,7 +64,7 @@ class ProductInfoContainer extends StatelessWidget {
                 child: TTextFieldRounded(
                   controller: controller.originalPriceController,
                   hintText: '0.00',
-                  hintTextStyle: Theme.of(context).textTheme.titleMedium,
+                  hintTextStyle: hintStyle,
                   labelText: 'Original price',
                   labelStyle: Theme.of(context).textTheme.titleMedium,
                   focusedBorderColor: dark ? TColors.dark : TColors.dark,
@@ -61,84 +75,80 @@ class ProductInfoContainer extends StatelessWidget {
                 child: TTextFieldRounded(
                   controller: controller.salePriceController,
                   hintText: '0.00',
-                  hintTextStyle: Theme.of(context).textTheme.titleMedium,
+                  hintTextStyle: hintStyle,
                   labelText: 'Sale price',
                   labelStyle: Theme.of(context).textTheme.titleMedium,
                   focusedBorderColor: dark ? TColors.dark : TColors.dark,
                 ),
-              )
+              ),
             ],
           ),
           SizedBox(height: TSizes.md),
-          Row(
-            children: [
-              Expanded(
-                child: Obx(
-                  () => TDropdownField<String>(
+          Obx(() {
+            if (controller.isLoadingProductOptions.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (controller.productOptionsError.value != null) {
+              return Column(
+                children: [
+                  Text(controller.productOptionsError.value!),
+                  TextButton(
+                    onPressed: controller.loadProductOptions,
+                    child: const Text('Retry loading categories and brands'),
+                  ),
+                ],
+              );
+            }
+
+            return Row(
+              children: [
+                Expanded(
+                  child: TDropdownField<int>(
                     labelText: 'Category',
                     hintText: 'Select category',
-                    value: controller.selectedCategory.value,
-                    items: const [
-                      DropdownMenuItem(value: 'Sport', child: Text('Sport')),
-                      DropdownMenuItem(value: 'Electronics', child: Text('Electronics')),
-                      DropdownMenuItem(value: 'Phones & Tablets', child: Text('Phones & Tablets')),
-                      DropdownMenuItem(value: 'Home & Office', child: Text('Home & Office')),
-                      DropdownMenuItem(value: 'Fashion', child: Text('Fashion')),
-                      DropdownMenuItem(value: 'Health & Beauty', child: Text('Health & Beauty')),
-                      DropdownMenuItem(value: 'Computing', child: Text('Computing')),
-                      DropdownMenuItem(value: 'Grocery', child: Text('Grocery')),
-                      DropdownMenuItem(value: 'Garden & Outdoors', child: Text('Garden & Outdoors')),
-                      DropdownMenuItem(value: 'Automotive', child: Text('Automotive')),
-                      DropdownMenuItem(value: 'Audio', child: Text('Audio')),
-                      DropdownMenuItem(value: 'Footwear', child: Text('Footwear')),
+                    value: controller.selectedCategoryId.value,
+                    items: [
+                      for (final category in controller.categories)
+                        DropdownMenuItem(
+                          value: category.id,
+                          child: Text(category.name),
+                        ),
                     ],
                     onChanged: (value) {
                       if (value != null) controller.setCategory(value);
                     },
                   ),
                 ),
-              ),
-              SizedBox(width: TSizes.md),
-              Expanded(
-                child: Obx(
-                  () => TDropdownField<String>(
+                SizedBox(width: TSizes.md),
+                Expanded(
+                  child: TDropdownField<int>(
                     labelText: 'Brand',
-                    hintText: 'Select Brand',
-                    value: controller.selectedBrand.value,
-                    items: const [
-                      DropdownMenuItem(value: 'Nike', child: Text('Nike')),
-                      DropdownMenuItem(value: 'Adidas', child: Text('Adidas')),
-                      DropdownMenuItem(value: 'Puma', child: Text('Puma')),
-                      DropdownMenuItem(value: 'Apple', child: Text('Apple')),
-                      DropdownMenuItem(value: 'Samsung', child: Text('Samsung')),
-                      DropdownMenuItem(value: 'Sony', child: Text('Sony')),
-                      DropdownMenuItem(value: 'JBL', child: Text('JBL')),
-                      DropdownMenuItem(value: 'Xiaomi', child: Text('Xiaomi')),
-                      DropdownMenuItem(value: 'Huawei', child: Text('Huawei')),
-                      DropdownMenuItem(value: 'HP', child: Text('HP')),
-                      DropdownMenuItem(value: 'Dell', child: Text('Dell')),
-                      DropdownMenuItem(value: 'Lenovo', child: Text('Lenovo')),
-                      DropdownMenuItem(value: 'LG', child: Text('LG')),
-                      DropdownMenuItem(value: 'Reebok', child: Text('Reebok')),
-                      DropdownMenuItem(value: 'New Balance', child: Text('New Balance')),
-                      DropdownMenuItem(value: 'Under Armour', child: Text('Under Armour')),
-                      DropdownMenuItem(value: 'Canon', child: Text('Canon')),
-                      DropdownMenuItem(value: 'Bose', child: Text('Bose')),
+                    hintText: 'Select brand',
+                    value: controller.selectedBrandId.value ?? 0,
+                    items: [
+                      const DropdownMenuItem(value: 0, child: Text('No brand')),
+                      for (final brand in controller.brands)
+                        DropdownMenuItem(
+                          value: brand.id,
+                          child: Text(brand.name),
+                        ),
                     ],
-                    onChanged: (value) {
-                      if (value != null) controller.setBrand(value);
-                    },
+                    onChanged: controller.setBrand,
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            );
+          }),
           SizedBox(height: TSizes.md),
 
           // ------------------------------------------------------------
           // Variants — colors, sizes (category-dependent), stock per variant
           // ------------------------------------------------------------
-          TSectionHeading(title: 'Variants', showActionButton: false, fontsize: 2),
+          TSectionHeading(
+            title: 'Variants',
+            showActionButton: false,
+            fontsize: 2,
+          ),
           SizedBox(height: TSizes.spaceBtwItems),
           Text('Colors', style: Theme.of(context).textTheme.titleMedium),
           SizedBox(height: TSizes.spaceBtwItems / 2),
@@ -156,20 +166,21 @@ class ProductInfoContainer extends StatelessWidget {
               ],
             );
           }),
-          Text('Stock per variant', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            'Stock per variant',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           SizedBox(height: TSizes.spaceBtwItems / 2),
           const VariantStockSection(),
 
           SizedBox(height: TSizes.md),
           Row(
             children: [
-              Expanded(child: TRoundedElevatedButton(onPressed: () {}, text: 'Draft', color: TColors.dark)),
-              SizedBox(width: TSizes.xs),
               Expanded(
-                flex: 2,
                 child: TRoundedElevatedButton(
-                  onPressed: () => controller.submitProduct(),
+                  onPressed: () => onSave(),
                   text: 'Save',
+                  isLoading: isSaving,
                 ),
               ),
             ],

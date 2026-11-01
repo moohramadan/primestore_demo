@@ -25,3 +25,36 @@ func (q *Queries) GetBrand(ctx context.Context, id int32) (Brand, error) {
 	)
 	return i, err
 }
+
+const listBrands = `-- name: ListBrands :many
+SELECT id, name, logo_url, is_verified, created_at FROM brands ORDER BY name
+`
+
+func (q *Queries) ListBrands(ctx context.Context) ([]Brand, error) {
+	rows, err := q.db.QueryContext(ctx, listBrands)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Brand
+	for rows.Next() {
+		var i Brand
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.LogoUrl,
+			&i.IsVerified,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

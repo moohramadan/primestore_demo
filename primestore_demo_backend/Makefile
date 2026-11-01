@@ -13,8 +13,16 @@ migrateup:
 migratedown:
 	migrate -path db/migration -database "postgresql://postgres:secret@localhost:5433/primestore?sslmode=disable" -verbose down
 
+migrateup1:
+	migrate -path db/migration -database "postgresql://postgres:secret@localhost:5433/primestore?sslmode=disable" -verbose up 1
+
+migratedown1:
+	migrate -path db/migration -database "postgresql://postgres:secret@localhost:5433/primestore?sslmode=disable" -verbose down 1
+
 sqlc:
 	sqlc generate
 
-.PHONY: postgres createdb dropdb migrateup migratedown sqlc
+run:
+	go run main.go
 
+.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 sqlc run

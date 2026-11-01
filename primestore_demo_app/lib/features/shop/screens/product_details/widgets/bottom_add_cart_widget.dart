@@ -1,4 +1,4 @@
-
+import 'package:demo_project/common/widgets/buttons/elevevated_button.dart';
 import 'package:demo_project/common/widgets/icons/t_circular_icon.dart';
 import 'package:demo_project/features/shop/controllers/product_detail_controller.dart';
 import 'package:demo_project/features/shop/models/product_model.dart';
@@ -20,7 +20,9 @@ class TBottomAddToCart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
-    final controller = Get.find<ProductDetailController>(tag: product.id.toString());
+    final controller = Get.find<ProductDetailController>(
+      tag: product.id.toString(),
+    );
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -34,50 +36,65 @@ class TBottomAddToCart extends StatelessWidget {
           topRight: Radius.circular(TSizes.cardRadiusLg),
         ),
       ),
-      child: Obx(() => Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: controller.decrement,
-                    child: const TCircularIcon(
-                      icon: Iconsax.minus,
-                      backgroundColor: TColors.darkGrey,
-                      width: 40,
-                      height: 40,
-                      color: TColors.white,
-                    ),
+      child: Obx(
+        () => Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: controller.decrement,
+                  child: const TCircularIcon(
+                    icon: Iconsax.minus,
+                    backgroundColor: TColors.darkGrey,
+                    width: 40,
+                    height: 40,
+                    color: TColors.white,
                   ),
-                  const SizedBox(width: TSizes.spaceBtwItems),
-                  Text('${controller.quantity.value}', style: Theme.of(context).textTheme.titleSmall),
-                  const SizedBox(width: TSizes.spaceBtwItems),
-                  GestureDetector(
-                    onTap: controller.increment,
-                    child: const TCircularIcon(
-                      icon: Iconsax.add,
-                      backgroundColor: TColors.black,
-                      width: 40,
-                      height: 40,
-                      color: TColors.white,
-                    ),
-                  ),
-                ],
-              ),
-              ElevatedButton(
-                onPressed: controller.isOutOfStock ? null : () {
-                  // cart backend not built yet — placeholder for now
-                  Get.snackbar('Added', '${controller.quantity.value}x added to cart');
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.all(TSizes.md),
-                  backgroundColor: controller.isOutOfStock ? TColors.darkGrey : TColors.black,
-                  side: BorderSide(color: controller.isOutOfStock ? TColors.darkGrey : TColors.black),
                 ),
-                child: Text(controller.isOutOfStock ? 'Out of Stock' : 'Add to Cart'),
-              ),
-            ],
-          )),
+                const SizedBox(width: TSizes.spaceBtwItems),
+                Text(
+                  '${controller.quantity.value}',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(width: TSizes.spaceBtwItems),
+                GestureDetector(
+                  onTap: controller.increment,
+                  child: const TCircularIcon(
+                    icon: Iconsax.add,
+                    backgroundColor: TColors.black,
+                    width: 40,
+                    height: 40,
+                    color: TColors.white,
+                  ),
+                ),
+              ],
+            ),
+            TRoundedElevatedButton(
+              width: null,
+              borderRadius: TSizes.borderRadiusLg,
+              onPressed: controller.isOutOfStock
+                  ? null
+                  : () {
+                      // cart backend not built yet — placeholder for now
+                      Get.snackbar(
+                        'Added',
+                        '${controller.quantity.value}x added to cart',
+                      );
+                    },
+              padding: const EdgeInsets.all(TSizes.md),
+              color: controller.isOutOfStock ? TColors.darkGrey : TColors.black,
+              borderColor: controller.isOutOfStock
+                  ? TColors.darkGrey
+                  : TColors.black,
+              text: controller.isOutOfStock ? 'Out of Stock' : 'Add to Cart',
+              textStyle: Theme.of(
+                context,
+              ).textTheme.titleMedium!.apply(color: TColors.white),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
