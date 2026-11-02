@@ -5,8 +5,8 @@ class TColors {
 
   // App Basic Colors
   //static const Color primary = Color.fromRGBO(2, 231, 212, 1);
-  static const Color primary = Color.fromRGBO(2, 97, 240, 1);
-  //static const Color primary = Color.fromRGBO(240, 85, 2, 1);
+   //static const Color primary = Color.fromRGBO(2, 97, 240, 1);
+  static const Color primary = Color.from(alpha: 1, red: 0.404, green: 0.227, blue: 0.718);
 
   static const Color scaffoldDarkBlue1 = Color.fromRGBO(20, 25, 39, 1);
   static const Color scaffoldDarkBlue2 = Color.fromRGBO(20, 44, 92, 1);
