@@ -34,10 +34,14 @@ class TCarouselSlider extends StatelessWidget {
           items: banners
               .map(
                 (image) => TRoundedImage(
-                  imageUrl: image,
-                  isNetworkImage: false,
-                  onPressed: () {},
-                ),
+  imageUrl: image,
+  isNetworkImage: false,
+  fit: BoxFit.cover,
+  width: double.infinity,
+  padding: EdgeInsets.zero,
+  backgroundColor: Colors.transparent,
+  onPressed: () {},
+),
               )
               .toList(),
         ),

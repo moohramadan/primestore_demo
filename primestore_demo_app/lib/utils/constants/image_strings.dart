@@ -65,14 +65,14 @@ static const String electronicsIcon =
 
 /// BANNERS
 static const String promoBanner1 =
-    "assets/banners/promo-banner-1.PNG";
+    "assets/banners/IMG_1675.JPG";
 
 static const String promoBanner2 =
-    "assets/banners/promo-banner-2.PNG";
+    "assets/banners/IMG_1676.JPG";
 
 
 static const String promoBanner3 =
-    "assets/banners/promo-banner-3.PNG";
+    "assets/banners/IMG_1677.JPG";
 
 
 ///User

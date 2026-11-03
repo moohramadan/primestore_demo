@@ -155,7 +155,7 @@ class TWelcomecart extends StatelessWidget {
                 'Welcome',
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
-                style: Theme.of(context).textTheme.headlineSmall,
+                style: Theme.of(context).textTheme.headlineSmall!.apply(color: TColors.white),
               ),
             ),
             SizedBox(
@@ -164,7 +164,7 @@ class TWelcomecart extends StatelessWidget {
                 '@mooh',
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
-                style: Theme.of(context).textTheme.bodySmall,
+                style: Theme.of(context).textTheme.bodySmall!.apply(color: TColors.white),
               ),
             ),
           ],
@@ -173,7 +173,7 @@ class TWelcomecart extends StatelessWidget {
         TGlassMorphism(
           child: GestureDetector(
             onTap: () => Get.to(() => CartScreen()),
-            child: Icon(Iconsax.shopping_bag),
+            child: Icon(Iconsax.shopping_bag, color: TColors.white,),
           ),
         ),
       ],
