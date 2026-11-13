@@ -3,6 +3,7 @@ import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/currency.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/helpers/helper_functions.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 class TProductTile extends StatelessWidget {
@@ -46,7 +47,7 @@ class TProductTile extends StatelessWidget {
                   height: 48,
                   fit: BoxFit.cover,
                   image: imageUrl!.startsWith('http')
-                      ? NetworkImage(imageUrl!)
+                      ? CachedNetworkImageProvider(imageUrl!)
                       : AssetImage(imageUrl!) as ImageProvider,
                   errorBuilder: (_, _, _) => TRoundedIcon(icon: icon),
                 ),

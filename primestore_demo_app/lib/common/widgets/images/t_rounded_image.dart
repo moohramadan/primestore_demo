@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class TRoundedImage extends StatelessWidget {
   const TRoundedImage({
@@ -47,7 +48,7 @@ class TRoundedImage extends StatelessWidget {
           child: Image(
             fit: fit,
             image: isNetworkImage
-                ? NetworkImage(imageUrl)
+                ? CachedNetworkImageProvider(imageUrl)
                 : AssetImage(imageUrl) as ImageProvider,
           ),
         ),
@@ -55,4 +56,3 @@ class TRoundedImage extends StatelessWidget {
     );
   }
 }
-

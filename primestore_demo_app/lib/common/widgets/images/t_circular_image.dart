@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class TCircularImage extends StatelessWidget {
   const TCircularImage({
@@ -34,7 +35,7 @@ class TCircularImage extends StatelessWidget {
         child: Image(
           fit: fit,
           image: isNetworkImage
-              ? NetworkImage(image)
+              ? CachedNetworkImageProvider(image)
               : AssetImage(image) as ImageProvider,
           color: overlayColor,
         ),

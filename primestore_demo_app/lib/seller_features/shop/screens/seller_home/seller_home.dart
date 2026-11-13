@@ -1,5 +1,5 @@
 import 'package:demo_project/common/widgets/texts/section_heading.dart';
-import 'package:demo_project/seller_features/shop/screens/seller_home/widgets/seller_categories.dart';
+
 import 'package:demo_project/seller_features/shop/screens/seller_home/widgets/seller_analytics_widget.dart';
 import 'package:demo_project/seller_features/shop/screens/seller_home/widgets/top_products.dart';
 import 'package:demo_project/utils/constants/colors.dart';
@@ -30,16 +30,16 @@ class SellerHomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: TSizes.spaceBtwSections),
+              const SizedBox(height: TSizes.spaceBtwSections),
               Text('Today', style: Theme.of(context).textTheme.bodyMedium),
               //SizedBox(height: TSizes.xs,),
-              TSectionHeading(
+              const TSectionHeading(
                 title: '\$2,750.00',
                 showActionButton: false,
                 fontsize: 30,
                 fontWeightDelta: 2,
               ),
-              SizedBox(height: TSizes.spaceBtwItems),
+              const SizedBox(height: TSizes.spaceBtwItems),
               //TSellerCategories(),
               SizedBox(height: TSizes.spaceBtwItems),
               TSellerAnalyticsWidget(),

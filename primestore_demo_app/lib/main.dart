@@ -4,6 +4,7 @@ import 'package:demo_project/features/autentication/screens/login/login%20screen
 import 'package:demo_project/features/shop/controllers/wishlist_controller.dart';
 import 'package:demo_project/features/shop/screens/home/widgets/home_screen_shimmer.dart';
 import 'package:demo_project/navigation/navigation%20menu.dart';
+import 'package:demo_project/splash_screen.dart';
 
 import 'package:demo_project/utils/theme/theme.dart';
 import 'package:flutter/material.dart';
@@ -11,11 +12,13 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/src/extension_instance.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 
+
 void main() {
   Get.put(UserController(), permanent: true);
   Get.put(WishlistController(), permanent: true);
+  Get.put(SessionController(), permanent: true); // starts auto-login during the splash
 
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class AppEntryPoint extends StatelessWidget {
@@ -23,7 +26,7 @@ class AppEntryPoint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sessionController = Get.put(SessionController());
+    final sessionController = Get.find<SessionController>();
 
     return FutureBuilder<bool>(
       future: sessionController.autoLoginFuture,
@@ -32,8 +35,8 @@ class AppEntryPoint extends StatelessWidget {
           return const Scaffold(body: HomeScreenShimmer());
         }
         final loggedIn = snapshot.data ?? false;
-        return loggedIn ? NavigationMenu() : LoginScreen();
-      },
+        return loggedIn ? const NavigationMenu() : const LoginScreen();
+      }, 
     );
   }
 }
@@ -44,10 +47,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      themeMode: ThemeMode.system,
-      theme: TAppTheme.lightTheme,
-      darkTheme: TAppTheme.darkTheme,
-      home: const AppEntryPoint(),
-    );
+  themeMode: ThemeMode.system,
+  theme: TAppTheme.lightTheme,
+  darkTheme: TAppTheme.darkTheme,
+  debugShowCheckedModeBanner: false,
+  home: SplashScreen(next: () => const AppEntryPoint()),
+);
   }
 }

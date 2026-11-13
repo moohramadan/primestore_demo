@@ -7,6 +7,7 @@ import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/constants/currency.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:iconsax/iconsax.dart';
 
 class TGlassVerticalCard extends StatelessWidget {
@@ -43,8 +44,18 @@ class TGlassVerticalCard extends StatelessWidget {
                       child: imageUrl == null
                           ? const Icon(Iconsax.gallery_slash)
                           : (imageUrl.startsWith('http')
-                              ? Image.network(imageUrl, height: 80, width: double.infinity, fit: BoxFit.contain)
-                              : Image.asset(imageUrl, height: 80, width: double.infinity, fit: BoxFit.contain)),
+                                ? CachedNetworkImage(
+                                    imageUrl: imageUrl,
+                                    height: 80,
+                                    width: double.infinity,
+                                    fit: BoxFit.contain,
+                                  )
+                                : Image.asset(
+                                    imageUrl,
+                                    height: 80,
+                                    width: double.infinity,
+                                    fit: BoxFit.contain,
+                                  )),
                     ),
                     SizedBox(height: TSizes.spaceBtwItems / 2),
                     Padding(
@@ -74,12 +85,16 @@ class TGlassVerticalCard extends StatelessWidget {
                           const SizedBox(width: TSizes.xs),
                           Row(
                             children: [
-                              TProductPriceText(price: price.toStringAsFixed(2), isLarge: false),
+                              TProductPriceText(
+                                price: price.toStringAsFixed(2),
+                                isLarge: false,
+                              ),
                               if (variant?.isOnSale ?? false) ...[
                                 const SizedBox(width: 10),
                                 Text(
                                   TCurrency.format(originalPrice),
-                                  style: Theme.of(context).textTheme.titleSmall!.apply(
+                                  style: Theme.of(context).textTheme.titleSmall!
+                                      .apply(
                                         decoration: TextDecoration.lineThrough,
                                       ),
                                 ),
@@ -108,11 +123,11 @@ class TGlassVerticalCard extends StatelessWidget {
               child: Text('$discountPercent%'),
             ),
           ),
-         Positioned(
-      top: 8,
-      right: 8,
-      child: WishlistIconButton(product: product),
-    ),
+        Positioned(
+          top: 8,
+          right: 8,
+          child: WishlistIconButton(product: product),
+        ),
       ],
     );
   }

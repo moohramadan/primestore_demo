@@ -4,6 +4,7 @@ import 'package:demo_project/features/shop/controllers/wishlist_controller.dart'
 import 'package:demo_project/features/shop/screens/product_details/product_detail.dart';
 import 'package:demo_project/utils/constants/currency.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:get/get.dart';
 
 // import your existing product-tap navigation target here
@@ -98,8 +99,8 @@ class _WishlistScreenState extends State<WishlistScreen> {
                               child:
                                   product.mainImageUrl != null &&
                                       product.mainImageUrl!.startsWith('http')
-                                  ? Image.network(
-                                      product.mainImageUrl!,
+                                  ? CachedNetworkImage(
+                                      imageUrl: product.mainImageUrl!,
                                       fit: BoxFit.cover,
                                       width: double.infinity,
                                     )
