@@ -5,7 +5,6 @@ import 'package:demo_project/features/shop/controllers/wishlist_controller.dart'
 import 'package:demo_project/features/shop/screens/home/widgets/home_screen_shimmer.dart';
 import 'package:demo_project/navigation/navigation%20menu.dart';
 import 'package:demo_project/splash_screen.dart';
-
 import 'package:demo_project/utils/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
