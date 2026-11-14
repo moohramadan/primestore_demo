@@ -6,6 +6,7 @@ import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/constants/currency.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:iconsax/iconsax.dart';
 
 class TVerticalProductCard extends StatelessWidget {
@@ -44,8 +45,8 @@ class TVerticalProductCard extends StatelessWidget {
                   child: imageUrl == null
                       ? const Icon(Iconsax.gallery_slash)
                       : (imageUrl.startsWith('http')
-                            ? Image.network(
-                                imageUrl,
+                            ? CachedNetworkImage(
+                                imageUrl: imageUrl,
                                 height: 80,
                                 width: double.infinity,
                                 fit: BoxFit.contain,

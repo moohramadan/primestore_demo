@@ -2,6 +2,7 @@ import 'package:demo_project/common/widgets/glass_morphism/glass_morphism_contai
 import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:iconsax/iconsax.dart';
 
 /// Profile header card — same footprint/role as the green header in the
@@ -43,7 +44,9 @@ class TProfileHeader extends StatelessWidget {
                 radius: 32,
                 backgroundColor: TColors.primary.withValues(alpha:  0.15),
                 backgroundImage:
-                    avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+                    avatarUrl != null
+                        ? CachedNetworkImageProvider(avatarUrl!)
+                        : null,
                 child: avatarUrl == null
                     ? const Icon(Iconsax.user, color: TColors.primary)
                     : null,

@@ -7,6 +7,7 @@ import 'package:demo_project/utils/constants/colors.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/helpers/helper_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/src/extension_instance.dart';
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
@@ -55,7 +56,7 @@ class TProductImageSlider extends StatelessWidget {
                       return const Icon(Iconsax.gallery_slash, size: 64);
                     }
                     return image.isNetworkImage
-                        ? Image.network(url)
+                        ? CachedNetworkImage(imageUrl: url)
                         : Image.asset(url);
                   }),
                 ),

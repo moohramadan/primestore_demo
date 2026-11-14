@@ -27,7 +27,7 @@ class LoginController extends GetxController {
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
       );
-      Get.snackbar('Success', 'Logged in!');
+      Get.snackbar('Success', 'Logged in!', backgroundColor: Colors.green);
       Get.to(() => NavigationMenu());
     } on UnverifiedEmailException {
       Get.snackbar(

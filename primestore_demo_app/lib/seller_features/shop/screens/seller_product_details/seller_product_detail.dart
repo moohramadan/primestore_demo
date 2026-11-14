@@ -4,6 +4,7 @@ import 'package:demo_project/utils/constants/currency.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:demo_project/utils/popups/loaders.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:get/get.dart';
 
 class SellerProductDetail extends StatefulWidget {
@@ -67,7 +68,7 @@ class _SellerProductDetailState extends State<SellerProductDetail> {
                 height: 260,
                 fit: BoxFit.cover,
                 image: image!.isNetworkImage
-                    ? NetworkImage(imageUrl)
+                    ? CachedNetworkImageProvider(imageUrl)
                     : AssetImage(imageUrl) as ImageProvider,
                 errorBuilder: (_, _, _) => const SizedBox(
                   height: 260,
