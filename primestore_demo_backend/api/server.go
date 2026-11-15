@@ -70,7 +70,10 @@ func NewServer(store db.Queries, conn *sql.DB, tokenMaker *util.TokenMaker, mail
 	authRoutes.POST("/seller/products", rateLimitMiddleware(productLimiter), sellerOnly(server), server.createProduct)
 	authRoutes.GET("/seller/products", sellerOnly(server), server.listSellerProducts)
 	authRoutes.PUT("/seller/products/:id", rateLimitMiddleware(productLimiter), sellerOnly(server), server.updateSellerProduct)
-
+    authRoutes.POST("/cart/items", server.createCartItem)
+    authRoutes.PUT("/cart/items/:id", server.updateCartItem)
+    authRoutes.DELETE("/cart/items/:id", server.deleteCartItem)
+    authRoutes.GET("/cart", server.getCart)
 	server.router = router
 	return server
 }

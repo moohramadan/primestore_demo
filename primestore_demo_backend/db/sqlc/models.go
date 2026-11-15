@@ -32,6 +32,15 @@ type Brand struct {
 	CreatedAt  sql.NullTime   `json:"created_at"`
 }
 
+type CartItem struct {
+	ID        int32     `json:"id"`
+	UserID    int32     `json:"user_id"`
+	VariantID int32     `json:"variant_id"`
+	Quantity  int32     `json:"quantity"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type Category struct {
 	ID        int32          `json:"id"`
 	Name      string         `json:"name"`

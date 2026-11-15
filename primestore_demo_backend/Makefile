@@ -19,10 +19,13 @@ migrateup1:
 migratedown1:
 	migrate -path db/migration -database "postgresql://postgres:secret@localhost:5433/primestore?sslmode=disable" -verbose down 1
 
+new_migration:
+	migrate create -ext sql -dir db/migration -seq $(name)
+
 sqlc:
 	sqlc generate
 
 server:
 	go run main.go
 
-.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 sqlc run
+.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 sqlc server new_migration

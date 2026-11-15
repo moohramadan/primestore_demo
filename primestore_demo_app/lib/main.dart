@@ -1,6 +1,7 @@
 import 'package:demo_project/features/autentication/controllers/session__controller.dart';
 import 'package:demo_project/features/autentication/controllers/user_controller.dart';
 import 'package:demo_project/features/autentication/screens/login/login%20screen.dart';
+import 'package:demo_project/features/shop/controllers/cart_controller.dart';
 import 'package:demo_project/features/shop/controllers/wishlist_controller.dart';
 import 'package:demo_project/features/shop/screens/home/widgets/home_screen_shimmer.dart';
 import 'package:demo_project/navigation/navigation%20menu.dart';
@@ -15,7 +16,8 @@ import 'package:get/get_navigation/src/root/get_material_app.dart';
 void main() {
   Get.put(UserController(), permanent: true);
   Get.put(WishlistController(), permanent: true);
-  Get.put(SessionController(), permanent: true); // starts auto-login during the splash
+  Get.put(SessionController(), permanent: true);
+  Get.put(CartController(), permanent: true); // starts auto-login during the splash
 
   runApp(const MyApp());
 }
