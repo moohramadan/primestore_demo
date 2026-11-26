@@ -6,6 +6,7 @@ package sqlc
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
 )
 
@@ -46,6 +47,69 @@ type Category struct {
 	Name      string         `json:"name"`
 	CreatedAt sql.NullTime   `json:"created_at"`
 	Icon      sql.NullString `json:"icon"`
+}
+
+type Order struct {
+	ID             int64        `json:"id"`
+	OrderNumber    string       `json:"order_number"`
+	UserID         int32        `json:"user_id"`
+	Status         string       `json:"status"`
+	PaymentStatus  string       `json:"payment_status"`
+	ShipFullName   string       `json:"ship_full_name"`
+	ShipPhone      string       `json:"ship_phone"`
+	ShipLine1      string       `json:"ship_line1"`
+	ShipLine2      string       `json:"ship_line2"`
+	ShipCity       string       `json:"ship_city"`
+	ShipState      string       `json:"ship_state"`
+	ShipPostalCode string       `json:"ship_postal_code"`
+	ShipCountry    string       `json:"ship_country"`
+	Subtotal       string       `json:"subtotal"`
+	DeliveryFee    string       `json:"delivery_fee"`
+	Total          string       `json:"total"`
+	PaidAt         sql.NullTime `json:"paid_at"`
+	CancelledAt    sql.NullTime `json:"cancelled_at"`
+	CreatedAt      time.Time    `json:"created_at"`
+	UpdatedAt      time.Time    `json:"updated_at"`
+	StockRef       string       `json:"stock_ref"`
+}
+
+type OrderIdempotencyKey struct {
+	UserID         int32     `json:"user_id"`
+	IdempotencyKey string    `json:"idempotency_key"`
+	OrderID        int64     `json:"order_id"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type OrderItem struct {
+	ID           int64  `json:"id"`
+	OrderID      int64  `json:"order_id"`
+	VariantID    int32  `json:"variant_id"`
+	ProductID    int32  `json:"product_id"`
+	SellerID     int32  `json:"seller_id"`
+	ProductName  string `json:"product_name"`
+	VariantLabel string `json:"variant_label"`
+	ImageUrl     string `json:"image_url"`
+	UnitPrice    string `json:"unit_price"`
+	Quantity     int32  `json:"quantity"`
+	LineTotal    string `json:"line_total"`
+}
+
+type OrderStatusHistory struct {
+	ID         int64          `json:"id"`
+	OrderID    int64          `json:"order_id"`
+	FromStatus sql.NullString `json:"from_status"`
+	ToStatus   string         `json:"to_status"`
+	ChangedBy  sql.NullInt32  `json:"changed_by"`
+	CreatedAt  time.Time      `json:"created_at"`
+}
+
+type OutboxEvent struct {
+	ID          int64           `json:"id"`
+	EventType   string          `json:"event_type"`
+	AggregateID int64           `json:"aggregate_id"`
+	Payload     json.RawMessage `json:"payload"`
+	CreatedAt   time.Time       `json:"created_at"`
+	PublishedAt sql.NullTime    `json:"published_at"`
 }
 
 type Product struct {
@@ -103,6 +167,17 @@ type SellerProfile struct {
 	BusinessAddress    string       `json:"business_address"`
 	VerificationStatus string       `json:"verification_status"`
 	CreatedAt          sql.NullTime `json:"created_at"`
+}
+
+type StockReservation struct {
+	ID        int64     `json:"id"`
+	Ref       string    `json:"ref"`
+	VariantID int32     `json:"variant_id"`
+	Quantity  int32     `json:"quantity"`
+	Status    string    `json:"status"`
+	ExpiresAt time.Time `json:"expires_at"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type User struct {
