@@ -1,17 +1,32 @@
-# demo_project
+# PrimeStore Flutter App
 
-A new Flutter project.
+The Flutter client for the PrimeStore demo e-commerce application.
 
-## Getting Started
+For repository setup, backend configuration, environment variables, API routes, and test commands, see the [project README](../README.md).
 
-This project is a starting point for a Flutter application.
+## Run Locally
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+flutter pub get
+flutter test
+flutter run
+```
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## API Configuration
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+The default Android emulator API address is configured in `lib/utils/constants/api_constants.dart`:
+
+```dart
+http://10.0.2.2:8080
+```
+
+Change this value when using a physical device, iOS simulator, web, or hosted backend.
+
+## Supported Areas
+
+- Authentication and email verification
+- Shopping catalog, cart, wishlist, and checkout
+- Saved addresses and user profile
+- Seller profile and product management
+- Seller order screens
+- Light and dark themes
