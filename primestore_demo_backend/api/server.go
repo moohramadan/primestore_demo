@@ -3,6 +3,10 @@ package api
 import (
 	"database/sql"
 	db "primestore_demo_backend/db/sqlc"
+	ordersadapters "primestore_demo_backend/internal/orders/adapters"
+	ordershttpapi "primestore_demo_backend/internal/orders/httpapi"
+	ordersservice "primestore_demo_backend/internal/orders/service"
+	ordersstore "primestore_demo_backend/internal/orders/store"
 	"primestore_demo_backend/util"
 	"time"
 
@@ -41,6 +45,24 @@ func NewServer(store db.Queries, conn *sql.DB, tokenMaker *util.TokenMaker, mail
 	router.POST("/users/refresh", server.refresh)
 	router.POST("/users/logout", server.logout)
 	authRoutes := router.Group("/").Use(authMiddleware(server))
+	catalog := ordersadapters.NewCatalogAdapter(&server.store, server.images.PublicURL)
+	orderStore := ordersstore.New(conn)
+	userID := func(ctx *gin.Context) int32 {
+		return int32(ctx.MustGet(authorizationPayloadKey).(*util.UserClaims).UserID)
+	}
+	cartService := ordersservice.New(orderStore, catalog)
+	ordershttpapi.Register(authRoutes, cartService, userID)
+	checkout := ordersservice.NewCheckoutService(ordersservice.CheckoutDeps{
+		Cart:      orderStore,
+		Orders:    orderStore,
+		Catalog:   catalog,
+		Inventory: ordersadapters.NewInventoryAdapter(conn, 15*time.Minute),
+		Addresses: ordersadapters.NewAddressesAdapter(db.New(conn)),
+	}, ordersservice.CheckoutConfig{
+		DeliveryFee: 0, // flat fee in cents: 50000 means 500.00
+	})
+	checkoutLimiter := NewRateLimiter(10, 15*time.Minute)
+	ordershttpapi.RegisterCheckout(authRoutes, checkout, userID, rateLimitMiddleware(checkoutLimiter))
 	authRoutes.GET("/users/me", server.getMe)
 	emailChangeRequestLimiter := NewRateLimiter(3, 10*time.Minute)
 	authRoutes.POST("/users/me/email/request", rateLimitMiddleware(emailChangeRequestLimiter), server.requestEmailChange)
@@ -70,7 +92,6 @@ func NewServer(store db.Queries, conn *sql.DB, tokenMaker *util.TokenMaker, mail
 	authRoutes.POST("/seller/products", rateLimitMiddleware(productLimiter), sellerOnly(server), server.createProduct)
 	authRoutes.GET("/seller/products", sellerOnly(server), server.listSellerProducts)
 	authRoutes.PUT("/seller/products/:id", rateLimitMiddleware(productLimiter), sellerOnly(server), server.updateSellerProduct)
-
 	server.router = router
 	return server
 }

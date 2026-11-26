@@ -1,5 +1,6 @@
 version: "2"
 sql:
+  # Catalog, users, inventory and everything else (unchanged)
   - engine: "postgresql"
     queries: "db/query"
     schema: "db/migration"
@@ -8,6 +9,20 @@ sql:
         package: "sqlc"
         out: "db/sqlc"
         emit_json_tags: true
+        emit_prepared_queries: false
+        emit_interface: false
+        emit_exact_table_names: false
+
+  # Orders module: its own queries and its own generated package, so orders code
+  # cannot call catalog or user queries by accident.
+  - engine: "postgresql"
+    queries: "internal/orders/store/queries"
+    schema: "db/migration"
+    gen:
+      go:
+        package: "gen"
+        out: "internal/orders/store/gen"
+        emit_json_tags: false
         emit_prepared_queries: false
         emit_interface: false
         emit_exact_table_names: false

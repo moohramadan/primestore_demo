@@ -1,9 +1,7 @@
 import 'package:demo_project/data/repositories/address_repository.dart';
-import 'package:demo_project/features/autentication/controllers/user_controller.dart';
 import 'package:demo_project/features/personalization/models/address_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_instance/src/extension_instance.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
@@ -20,7 +18,6 @@ class AddAddressController extends GetxController {
 
   final formKey = GlobalKey<FormState>();
   final _addressController = AddressController();
-  final _userController = Get.find<UserController>();
 
   final isLoading = false.obs;
 
@@ -30,7 +27,6 @@ class AddAddressController extends GetxController {
 
     try {
       await _addressController.createAddress(
-        accessToken: _userController.accessToken.value,
         fullName: fullNameController.text,
         phone: phoneController.text,
         addressLine1: addressLine1Controller.text,
@@ -67,7 +63,6 @@ class AddAddressController extends GetxController {
 
 class AddressListController extends GetxController {
   final _addressController = AddressController();
-  final _userController = Get.find<UserController>();
 
   final addresses = <AddressModel>[].obs;
   final isLoading = false.obs;
@@ -81,7 +76,7 @@ class AddressListController extends GetxController {
   Future<void> fetchAddresses() async {
     try {
       isLoading.value = true;
-      final result = await _addressController.getAddresses(_userController.accessToken.value);
+      final result = await _addressController.getAddresses();
       addresses.assignAll(result);
     } catch (e) {
       Get.snackbar('Error', e.toString());
@@ -92,10 +87,7 @@ class AddressListController extends GetxController {
 
   Future<void> setDefault(int addressId) async {
     try {
-      await _addressController.setDefaultAddress(
-        _userController.accessToken.value,
-        addressId,
-      );
+      await _addressController.setDefaultAddress(addressId);
       await fetchAddresses(); // list re-sorts with the new default on top
     } catch (e) {
       Get.snackbar('Error', e.toString());

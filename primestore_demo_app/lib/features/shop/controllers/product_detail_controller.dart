@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:demo_project/features/shop/controllers/cart_controller.dart';
 import 'package:demo_project/features/shop/models/product_model.dart';
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
@@ -49,9 +52,9 @@ class ProductDetailController extends GetxController {
   }
 
   void increment() {
-    final maxStock = selectedVariant.value?.stock ?? 0;
-    if (quantity.value < maxStock) quantity.value++;
-  }
+  final maxQty = min(selectedVariant.value?.stock ?? 0, CartController.maxQuantity);
+  if (quantity.value < maxQty) quantity.value++;
+}
 
   void decrement() {
     if (quantity.value > 1) quantity.value--;

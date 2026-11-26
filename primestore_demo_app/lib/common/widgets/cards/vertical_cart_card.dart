@@ -1,104 +1,149 @@
+import 'package:demo_project/features/shop/controllers/cart_controller.dart';
+import 'package:demo_project/features/shop/models/cart_model.dart';
 import 'package:demo_project/utils/constants/colors.dart';
-import 'package:demo_project/utils/constants/image_strings.dart';
+import 'package:demo_project/utils/constants/currency.dart';
 import 'package:demo_project/utils/constants/sizes.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:iconsax/iconsax.dart';
+
+// import TCurrency
+
+/// Server money strings ("1500.00") are parsed only here, for display.
+String cartMoney(String raw) => TCurrency.format(double.tryParse(raw) ?? 0);
 
 class THorizontalCartCard extends StatelessWidget {
-  const THorizontalCartCard({super.key, required this.dark});
+  const THorizontalCartCard({
+    super.key,
+    required this.dark,
+    required this.item,
+  });
 
   final bool dark;
+  final CartItemModel item;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cart = Get.find<CartController>();
+    final variantLabel = [
+      item.color,
+      item.size,
+    ].where((s) => s.isNotEmpty).join(' · ');
+
     return Container(
-      padding: const EdgeInsets.all(TSizes.md),
+      padding: const EdgeInsets.all(TSizes.sm),
       decoration: BoxDecoration(
-        color: dark ? TColors.darkerGrey : TColors.light,
-        borderRadius: BorderRadius.circular(TSizes.borderRadiusLg),
-        border: Border.all(color: TColors.borderSecondary),
+        color: dark ? TColors.darkContainer : TColors.white,
+        border: Border.all(
+          color: dark ? TColors.darkGrey : TColors.borderSecondary,
+        ),
+        borderRadius: BorderRadius.circular(TSizes.borderRadiusMd),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 88,
-            height: 88,
-            padding: const EdgeInsets.all(TSizes.sm),
-            decoration: BoxDecoration(
-              color: TColors.white,
-              borderRadius: BorderRadius.circular(TSizes.borderRadiusMd),
-            ),
-            child: Image.asset(TImages.productImage1, fit: BoxFit.contain),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(TSizes.borderRadiusMd),
+            child: item.imageUrl.isEmpty
+                ? _imagePlaceholder()
+                : Image(
+                    image:
+                        item.imageUrl.startsWith('http://') ||
+                            item.imageUrl.startsWith('https://')
+                        ? NetworkImage(item.imageUrl)
+                        : AssetImage(item.imageUrl),
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _imagePlaceholder(),
+                  ),
           ),
-          const SizedBox(width: TSizes.md),
+          const SizedBox(width: TSizes.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Nike Shoes',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: TSizes.xs),
-                Text(
-                  "FootWear",
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: TSizes.sm),
                 Row(
                   children: [
                     Expanded(
                       child: Text(
-                        '\$45.00',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                        item.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall,
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: TSizes.xs,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: dark ? TColors.darkGrey : TColors.grey,
-                        borderRadius: BorderRadius.circular(
-                          TSizes.borderRadiusXl,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                    Obx(() {
+                      final busy = cart.busyVariantIds.contains(item.variantId);
+                      return IconButton(
+                        onPressed: busy
+                            ? null
+                            : () => cart.removeItem(item.variantId),
+                        icon: const Icon(Iconsax.trash, size: 18),
+                        visualDensity: VisualDensity.compact,
+                      );
+                    }),
+                  ],
+                ),
+                if (variantLabel.isNotEmpty)
+                  Text(
+                    variantLabel,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: TColors.textSecondary,
+                    ),
+                  ),
+                Text(
+                  cartMoney(item.unitPrice),
+                  style: theme.textTheme.bodyMedium,
+                ),
+                if (!item.inStock)
+                  Text(
+                    'Not enough stock for this quantity',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.red,
+                    ),
+                  ),
+                const SizedBox(height: TSizes.xs),
+                Row(
+                  children: [
+                    Obx(() {
+                      final busy = cart.busyVariantIds.contains(item.variantId);
+                      return Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.remove, size: 14),
-                            onPressed: () {},
-                            constraints: const BoxConstraints(),
-                            padding: const EdgeInsets.all(TSizes.xs),
+                            onPressed: busy || item.quantity <= 1
+                                ? null
+                                : () => cart.setQuantity(
+                                    item.variantId,
+                                    item.quantity - 1,
+                                  ),
+                            icon: const Icon(Iconsax.minus, size: 18),
+                            visualDensity: VisualDensity.compact,
                           ),
                           Text(
-                            '1',
-                            style: Theme.of(context).textTheme.labelSmall,
+                            '${item.quantity}',
+                            style: theme.textTheme.titleSmall,
                           ),
                           IconButton(
-                            icon: const Icon(
-                              Icons.add,
-                              size: 14,
-                              color: TColors.white,
-                            ),
-                            onPressed: () {},
-                            constraints: const BoxConstraints(
-                              minWidth: 32,
-                              minHeight: 32,
-                            ),
-                            style: IconButton.styleFrom(
-                              backgroundColor: TColors.primary,
-                              padding: EdgeInsets.zero,
-                            ),
+                            onPressed:
+                                busy ||
+                                    item.quantity >= CartController.maxQuantity
+                                ? null
+                                : () => cart.setQuantity(
+                                    item.variantId,
+                                    item.quantity + 1,
+                                  ),
+                            icon: const Icon(Iconsax.add, size: 18),
+                            visualDensity: VisualDensity.compact,
                           ),
                         ],
-                      ),
+                      );
+                    }),
+                    const Spacer(),
+                    Text(
+                      cartMoney(item.lineTotal),
+                      style: theme.textTheme.titleMedium,
                     ),
                   ],
                 ),
@@ -109,4 +154,11 @@ class THorizontalCartCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _imagePlaceholder() => Container(
+    width: 80,
+    height: 80,
+    color: TColors.grey,
+    child: const Icon(Iconsax.image),
+  );
 }

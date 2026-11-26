@@ -96,7 +96,7 @@ func TestValidateDoesNotLeakSecrets(t *testing.T) {
 func clearEnv(t *testing.T) {
 	t.Helper()
 	for _, k := range []string{
-		"DB_DRIVER", "DB_SOURCE", "SERVER_ADDRESS", "TOKEN_SECRET",
+		"DB_DRIVER", "DB_SOURCE", "HTTP_SERVER_ADDRESS", "TOKEN_SECRET",
 		"SMTP_HOST", "SMTP_PORT", "SMTP_USERNAME", "SMTP_PASSWORD", "SMTP_FROM",
 		"GOOGLE_CLIENT_ID", "S3_BUCKET", "S3_PUBLIC_BASE_URL",
 		"AWS_REGION", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY",
@@ -108,7 +108,7 @@ func clearEnv(t *testing.T) {
 func TestLoadConfigFromFile(t *testing.T) {
 	clearEnv(t)
 	dir := t.TempDir()
-	content := "DB_DRIVER=postgres\nSERVER_ADDRESS=0.0.0.0:9000\nSMTP_PORT=2525\nS3_BUCKET=file-bucket\n"
+	content := "DB_DRIVER=postgres\nHTTP_SERVER_ADDRESS=0.0.0.0:9000\nSMTP_PORT=2525\nS3_BUCKET=file-bucket\n"
 	if err := os.WriteFile(filepath.Join(dir, ".env"), []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
